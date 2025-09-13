@@ -88,7 +88,7 @@ Normally, the output image will look something like this:
 
 However, if the image looks like this, the format is incorrect:
 
-<img src="images/broken.png" width="512" height="384">
+![Broken Image](images/broken.png)
 
 If this is the case, you need to change the byte order of the image. You can do this with ImageMagick by running one of the following commands in a terminal or command prompt:
 
@@ -137,11 +137,15 @@ The functionalities of the Python Matplotlib library provide even more options f
 
 ## More Examples
 
-<img src="radiometric/gray_brocket.jpg" width="240" height="180">
-<img src="output/20250606144147.jpg" width="240" height="180">
-<img src="output/20250606144148.jpg" width="240" height="180">
-<img src="output/20250606144152.jpg" width="240" height="180">
-<img src="output/20250606144154.jpg" width="240" height="180">
+<table>
+<tr>
+<td><img src="radiometric/gray_brocket.jpg" width="240" height="180"></td>
+<td><img src="output/20250606144147.jpg" width="240" height="180"></td>
+<td><img src="output/20250606144148.jpg" width="240" height="180"></td>
+<td><img src="output/20250606144152.jpg" width="240" height="180"></td>
+<td><img src="output/20250606144154.jpg" width="240" height="180"></td>
+<tr>
+<table>
 
 <img src="radiometric/porcupine.jpg" width="240" height="180">
 <img src="output/20250606153328.jpg" width="240" height="180">
