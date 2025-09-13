@@ -40,7 +40,7 @@ In some cases, which will be explained later, you'll also need ImageMagick [[2]]
 
 The process of converting raw values to temperatures won't be explained here, nor will the detailed concepts behind it. If you're interested, see the references below, which were used while researching and developing this software [[3-5]](#references).
 
-So what exactly is a radiometric thermal image? It's an image captured by a radiometric thermal camera, and it contains useful data needed for our program. Here's an example of such an image.
+So what exactly is a radiometric thermal image? It's an image captured by a radiometric thermal camera, and it contains useful data needed for the program. Here's an example of such an image.
 
 <img src="radiometric/green_iguana.jpg" width="512" height="384">
 
@@ -137,17 +137,25 @@ The functionalities of the Python Matplotlib library provide even more options f
 
 ## More Examples
 
-<img src="radiometric/gray_brocket.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606144147.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606144148.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606144152.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606144154.jpg" width="240" height="180" style="margin-bottom: 15px;">
+</table>
+<tr>
+<td><img src="radiometric/gray_brocket.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606144147.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606144148.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606144152.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606144154.jpg" width="240" height="180" style="margin-bottom: 15px;"></td>
+<td><tr>
+</table>
 
-<img src="radiometric/porcupine.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606153328.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606153330.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606153331.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606153334.jpg" width="240" height="180" style="margin-bottom: 15px;">
+</table>
+<tr>
+<td><img src="radiometric/porcupine.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606153328.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606153330.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606153331.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
+<td><img src="output/20250606153334.jpg" width="240" height="180" style="margin-bottom: 15px;"></td>
+<tr>
+</table>
 
 Radiometric thermal images from [[7]](#references) and [[8]](#references).
 
