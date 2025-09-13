@@ -42,7 +42,7 @@ The process of converting raw values to temperatures won't be explained here, no
 
 So what exactly is a radiometric thermal image? It's an image captured by a radiometric thermal camera, and it contains useful data needed for the program. Here's an example of such an image.
 
-<img src="radiometric/green_iguana.jpg" width="512" height="384">
+![Radiometric Thermal Image](radiometric/green_iguana.jpg)
 
 Typical radiometric thermal image [[6]](#references)
 
@@ -84,7 +84,7 @@ where `INPUT` is the path to the radiometric thermal image (e.g., `radiometric\g
 
 Normally, the output image will look something like this:
 
-<img src="raw_16bit/green_iguana.png" width="512" height="384">
+![Raw Thermal Image](raw_16bit/green_iguana.png)
 
 However, if the image looks like this, the format is incorrect:
 
@@ -126,10 +126,10 @@ Before opening another image with the Open button, ensure that the relevant meta
 
 Below, you can see the image displayed in different color palettes.
 
-<img src="output/20250606160401.jpg" width="512" height="384">
-<img src="output/20250606160403.jpg" width="512" height="384">
-<img src="output/20250606160406.jpg" width="512" height="384">
-<img src="output/20250606160408.jpg" width="512" height="384">
+![Grayscale](output/20250606160401.jpg)
+![Ironbow](output/20250606160403.jpg)
+![Rainbow](output/20250606160406.jpg)
+![Glowbow](output/20250606160408.jpg)
 
 The functionalities of the Python Matplotlib library provide even more options for analysis, such as zooming in and out to examine specific points more closely, more color palettes and other useful features.
 
@@ -137,21 +137,13 @@ The functionalities of the Python Matplotlib library provide even more options f
 
 ## More Examples
 
-<table>
-<tr>
-<td><img src="radiometric/gray_brocket.jpg" width="240" height="180"></td>
-<td><img src="output/20250606144147.jpg" width="240" height="180"></td>
-<td><img src="output/20250606144148.jpg" width="240" height="180"></td>
-<td><img src="output/20250606144152.jpg" width="240" height="180"></td>
-<td><img src="output/20250606144154.jpg" width="240" height="180"></td>
-<tr>
-<table>
-
-<img src="radiometric/porcupine.jpg" width="240" height="180">
-<img src="output/20250606153328.jpg" width="240" height="180">
-<img src="output/20250606153330.jpg" width="240" height="180">
-<img src="output/20250606153331.jpg" width="240" height="180">
-<img src="output/20250606153334.jpg" width="240" height="180">
+|             |                                                                   |                                                                |
+| ----------- | ----------------------------------------------------------------- | -------------------------------------------------------------- |
+| Radiometric | <img src="radiometric/gray_brocket.jpg" width="240" height="180"> | <img src="radiometric/porcupine.jpg" width="240" height="180"> |
+| Grayscale   | ![](output/20250606144147.jpg)                                    | ![](output/20250606153328.jpg)                                 |
+| Ironbow     | ![](output/20250606144148.jpg)                                    | ![](output/20250606153330.jpg)                                 |
+| Rainbow     | ![](output/20250606144152.jpg)                                    | ![](output/20250606153331.jpg)                                 |
+| Glowbow     | ![](output/20250606144154.jpg)                                    | ![](output/20250606153334.jpg)                                 |
 
 Radiometric thermal images from [[7]](#references) and [[8]](#references).
 
