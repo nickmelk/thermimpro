@@ -126,9 +126,9 @@ Before opening another image with the Open button, ensure that the relevant meta
 
 Below, you can see the image displayed in different color palettes.
 
-<img src="output/20250606160401.jpg" width="512" height="384" style="margin-right: 15px; margin-bottom: 15px;">
-<img src="output/20250606160403.jpg" width="512" height="384" style="margin-bottom: 15px;">
-<img src="output/20250606160406.jpg" width="512" height="384" style="margin-right: 15px;">
+<img src="output/20250606160401.jpg" width="512" height="384">
+<img src="output/20250606160403.jpg" width="512" height="384">
+<img src="output/20250606160406.jpg" width="512" height="384">
 <img src="output/20250606160408.jpg" width="512" height="384">
 
 The functionalities of the Python Matplotlib library provide even more options for analysis, such as zooming in and out to examine specific points more closely, more color palettes and other useful features.
@@ -137,25 +137,17 @@ The functionalities of the Python Matplotlib library provide even more options f
 
 ## More Examples
 
-</table>
-<tr>
-<td><img src="radiometric/gray_brocket.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606144147.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606144148.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606144152.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606144154.jpg" width="240" height="180" style="margin-bottom: 15px;"></td>
-<td><tr>
-</table>
+<img src="radiometric/gray_brocket.jpg" width="240" height="180">
+<img src="output/20250606144147.jpg" width="240" height="180">
+<img src="output/20250606144148.jpg" width="240" height="180">
+<img src="output/20250606144152.jpg" width="240" height="180">
+<img src="output/20250606144154.jpg" width="240" height="180">
 
-</table>
-<tr>
-<td><img src="radiometric/porcupine.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606153328.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606153330.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606153331.jpg" width="240" height="180" style="margin-right: 15px; margin-bottom: 15px;"></td>
-<td><img src="output/20250606153334.jpg" width="240" height="180" style="margin-bottom: 15px;"></td>
-<tr>
-</table>
+<img src="radiometric/porcupine.jpg" width="240" height="180">
+<img src="output/20250606153328.jpg" width="240" height="180">
+<img src="output/20250606153330.jpg" width="240" height="180">
+<img src="output/20250606153331.jpg" width="240" height="180">
+<img src="output/20250606153334.jpg" width="240" height="180">
 
 Radiometric thermal images from [[7]](#references) and [[8]](#references).
 
