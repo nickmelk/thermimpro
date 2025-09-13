@@ -138,7 +138,7 @@ The functionalities of the Python Matplotlib library provide even more options f
 ## More Examples
 
 |             | Radiometric thermal image from [[7]](#references)                 | Radiometric thermal image from [[8]](#references)              |
-| ----------- | ----------------------------------------------------------------- | -------------------------------------------------------------- |
+| ----------- | :---------------------------------------------------------------: | :------------------------------------------------------------: |
 | Radiometric | <img src="radiometric/gray_brocket.jpg" width="240" height="180"> | <img src="radiometric/porcupine.jpg" width="240" height="180"> |
 | Grayscale   | ![](output/20250606144147.jpg)                                    | ![](output/20250606153328.jpg)                                 |
 | Ironbow     | ![](output/20250606144148.jpg)                                    | ![](output/20250606153330.jpg)                                 |
@@ -149,10 +149,10 @@ The functionalities of the Python Matplotlib library provide even more options f
 
 1. ExifTool - [Download from here](https://exiftool.org/install.html).
 2. ImageMagick - [Download from here](https://imagemagick.org/script/download.php).
-3. tomas123. Re: Flir Ex: Realtime raw radiometric data streaming via UVC [Forum post]. EEVblog Electronics Community Forum. https://www.eevblog.com/forum/thermal-imaging/flir-ex-realtime-raw-radiometric-data-streaming-via-uvc/msg744673.
-4. Josh Veitch-Michaelis. Radiometry [Documentation]. Flirpy. https://flirpy.readthedocs.io/en/latest/getting_started/cameras.html.
-5. Glenn Tattersall. gtatters/Thermimage: Thermimage v4.1.3 [Documentation/Repository]. Zenodo. https://doi.org/10.5281/zenodo.5525416.
-6. Glenn Tattersall. Iguana iguana [Image]. TrEnCh-IR. https://trench-ir.azurewebsites.net/page?name=6204867555843852-Iguana_IR_2017-12-20_1478.jpg.
-7. Rabello Monteiro. Mazama gouazoubira [Image]. TrEnCh-IR. https://trench-ir.azurewebsites.net/page?name=39637009225835085-IR_0918.jpg
+3. tomas123. Re: Flir Ex: Realtime raw radiometric data streaming via UVC [Forum post]. [EEVblog Electronics Community Forum](https://www.eevblog.com/forum/thermal-imaging/flir-ex-realtime-raw-radiometric-data-streaming-via-uvc/msg744673).
+4. Josh Veitch-Michaelis. Radiometry [Documentation]. [Flirpy](https://flirpy.readthedocs.io/en/latest/getting_started/cameras.html).
+5. Glenn Tattersall. gtatters/Thermimage: Thermimage v4.1.3 [Documentation/Repository]. [Zenodo](https://doi.org/10.5281/zenodo.5525416).
+6. Glenn Tattersall. Iguana iguana [Image]. [TrEnCh-IR](https://trench-ir.azurewebsites.net/page?name=6204867555843852-Iguana_IR_2017-12-20_1478.jpg).
+7. Rabello Monteiro. Mazama gouazoubira [Image]. [TrEnCh-IR](https://trench-ir.azurewebsites.net/page?name=39637009225835085-IR_0918.jpg).
 8. Rabello Monteiro. Porcupine [Image]. TrEnCh-IR. Original link no longer available.
-9. Brian Helmuth. Phascolarctos cinereus [Image]. TrEnCh-IR. https://trench-ir.azurewebsites.net/page?name=10561635672528502-Koala1.jpg.
+9. Brian Helmuth. Phascolarctos cinereus [Image]. [TrEnCh-IR](https://trench-ir.azurewebsites.net/page?name=10561635672528502-Koala1.jpg).
