@@ -6,23 +6,23 @@ import numpy as np
 class ThermalImage:
     def __init__(self, metadata: dict):
         # External parameters
-        self.emiss = metadata["Emissivity"]                                 # Emissivity
-        self.obj_dist = metadata["Object Distance"]                         # Object Distance
-        self.refl_app_temp = metadata["Reflected Apparent Temperature"]     # Reflected Apparent Temperature
-        self.atm_temp = metadata["Atmospheric Temperature"]                 # Atmospheric Temperature
-        self.rel_hum = metadata["Relative Humidity"]                        # Relative Humidity
-        self.atm_trans_a_1 = metadata["Atmospheric Trans Alpha 1"]          # Atmospheric Trans Alpha 1
-        self.atm_trans_a_2 = metadata["Atmospheric Trans Alpha 2"]          # Atmospheric Trans Alpha 2
-        self.atm_trans_b_1 = metadata["Atmospheric Trans Beta 1"]           # Atmospheric Trans Beta 1
-        self.atm_trans_b_2 = metadata["Atmospheric Trans Beta 2"]           # Atmospheric Trans Beta 2
-        self.atm_trans_x = metadata["Atmospheric Trans X"]                  # Atmospheric Trans X
+        self.emiss = metadata["Emissivity"]
+        self.obj_dist = metadata["Object Distance"]
+        self.refl_app_temp = metadata["Reflected Apparent Temperature"]
+        self.atm_temp = metadata["Atmospheric Temperature"]
+        self.rel_hum = metadata["Relative Humidity"]
+        self.atm_trans_a_1 = metadata["Atmospheric Trans Alpha 1"]
+        self.atm_trans_a_2 = metadata["Atmospheric Trans Alpha 2"]
+        self.atm_trans_b_1 = metadata["Atmospheric Trans Beta 1"]
+        self.atm_trans_b_2 = metadata["Atmospheric Trans Beta 2"]
+        self.atm_trans_x = metadata["Atmospheric Trans X"]
 
         # Calibration parameters (specific to each FLIR thermal camera)
-        self.planck_r1 = metadata["Planck R1"]                              # Planck R1
-        self.planck_b = metadata["Planck B"]                                # Planck B
-        self.planck_f = metadata["Planck F"]                                # Planck F
-        self.planck_o = metadata["Planck O"]                                # Planck O
-        self.planck_r2 = metadata["Planck R2"]                              # Planck R2
+        self.planck_r1 = metadata["Planck R1"]
+        self.planck_b = metadata["Planck B"]
+        self.planck_f = metadata["Planck F"]
+        self.planck_o = metadata["Planck O"]
+        self.planck_r2 = metadata["Planck R2"]
 
         self.gray_16_image = None
         self.therm_image_c = None

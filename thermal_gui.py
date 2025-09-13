@@ -1,7 +1,8 @@
 import os
-import csv
+import json
 import datetime
 import tkinter as tk
+from tkinter import filedialog
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,15 +34,17 @@ class ThermalGUI:
         for ax in (self.ax_raw, self.ax_thermal, self.ax_graph, self.ax_info, self.ax_toolbar_thermal, self.ax_colorbar_thermal):
             ax.axis("off")
 
-        self.raw_image = self.ax_raw.imshow(np.zeros((480, 640)), cmap = "gray")
+        image_size = (metadata["Raw Thermal Image Height"], metadata["Raw Thermal Image Width"])
+
+        self.raw_image = self.ax_raw.imshow(np.zeros(image_size), cmap = "gray")
         self.ax_raw.set_title("Raw Image")
 
-        self.thermal_image = self.ax_thermal.imshow(np.zeros((480, 640)), cmap = "inferno")
+        self.thermal_image = self.ax_thermal.imshow(np.zeros(image_size), cmap = "inferno")
         self.ax_thermal.set_title("Ironbow")
 
         self.calibr_curve = self.ax_graph
 
-        self.signature = self.fig.text(0.992, 0.03, s = "ThermImPro v1.0\nCopyright ©2025 Mykola Melnyk aka NickMelk", fontsize = 8, horizontalalignment = "right")
+        self.signature = self.fig.text(0.992, 0.03, s = "ThermImPro v1.0\nCopyright ©2025 Mykola Melnyk (aka NickMelk)", fontsize = 8, horizontalalignment = "right")
 
         self.text_raw = self.ax_raw.text(1, -0.1, s = "", horizontalalignment = "right", verticalalignment = "bottom", transform = self.ax_raw.transAxes)
 
@@ -66,12 +69,10 @@ class ThermalGUI:
 
         metadata_info = ""
 
-        max_len = max(len(key) for key in metadata)
-
         for key in metadata:
-            metadata_info += f"{key}:{" " * (max_len - len(key) + 3)} {metadata[key]}\n"
+            metadata_info += f"{key + ":":35}{metadata[key]}\n"
         
-        self.info = self.ax_info.text(0, 0, s = metadata_info, horizontalalignment = "left", verticalalignment = "bottom", family = "monospace")
+        self.info = self.ax_info.text(0, -0.1, s = metadata_info, horizontalalignment = "left", verticalalignment = "bottom", family = "monospace")
 
         self.fig.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
 
@@ -81,7 +82,7 @@ class ThermalGUI:
         root = tk.Tk()
         root.withdraw()
 
-        file_path = tk.filedialog.askopenfilename(filetypes = [("Image Files", "*.raw *.jpg *.jpeg *.png *.tif *.tiff")])
+        file_path = filedialog.askopenfilename(filetypes = [("Image Files", "*.raw *.jpg *.jpeg *.png *.tif *.tiff")])
 
         root.destroy()
 
@@ -249,26 +250,15 @@ class ThermalGUI:
     def show(self):
         plt.show()
 
-def load_metadata():
-    with open("metadata.csv", newline = "") as csvfile:
-        metadata = csv.DictReader(csvfile)
+def load_metadata() -> dict:
+    """
+    Loads metadata from a JSON file.
 
-        metadata_row = next(metadata)
+    Returns:
+        dict: Metadata parameters stored in the dictionary.
+    """
 
-        return {
-            "Emissivity": float(metadata_row["emiss"]),
-            "Object Distance": float(metadata_row["obj_dist"]),
-            "Reflected Apparent Temperature": float(metadata_row["refl_app_temp"]),
-            "Atmospheric Temperature": float(metadata_row["atm_temp"]),
-            "Relative Humidity": float(metadata_row["rel_hum"]),
-            "Atmospheric Trans Alpha 1": float(metadata_row["atm_trans_a_1"]),
-            "Atmospheric Trans Alpha 2": float(metadata_row["atm_trans_a_2"]),
-            "Atmospheric Trans Beta 1": float(metadata_row["atm_trans_b_1"]),
-            "Atmospheric Trans Beta 2": float(metadata_row["atm_trans_b_2"]),
-            "Atmospheric Trans X": float(metadata_row["atm_trans_x"]),
-            "Planck R1": float(metadata_row["planck_r1"]),
-            "Planck B": float(metadata_row["planck_b"]),
-            "Planck F": float(metadata_row["planck_f"]),
-            "Planck O": float(metadata_row["planck_o"]),
-            "Planck R2": float(metadata_row["planck_r2"]),
-        }
+    with open("metadata.json") as file:
+        metadata = json.loads(file.read())
+
+    return metadata

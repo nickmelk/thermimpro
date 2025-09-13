@@ -1,0 +1,19 @@
+{
+    "Emissivity": 0.95,
+    "Object Distance": 3,
+    "Reflected Apparent Temperature": 21,
+    "Atmospheric Temperature": 21,
+    "Relative Humidity": 0.5,
+    "Atmospheric Trans Alpha 1": 0.006569,
+    "Atmospheric Trans Alpha 2": 0.01262,
+    "Atmospheric Trans Beta 1": -0.002276,
+    "Atmospheric Trans Beta 2": -0.00667,
+    "Atmospheric Trans X": 1.9,
+    "Planck R1": 21546.203,
+    "Planck B": 1507.2,
+    "Planck F": 1,
+    "Planck O": -6331,
+    "Planck R2": 0.016229488,
+    "Raw Thermal Image Width": 1024,
+    "Raw Thermal Image Height": 768
+}

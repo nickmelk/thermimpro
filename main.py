@@ -1,7 +1,10 @@
 from thermal_gui import ThermalGUI
 
-if __name__ == "__main__":
+def main():
     window = ThermalGUI()
 
     window.open_file()
     window.show()
+
+if __name__ == "__main__":
+    main()
