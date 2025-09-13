@@ -137,15 +137,13 @@ The functionalities of the Python Matplotlib library provide even more options f
 
 ## More Examples
 
-|             |                                                                   |                                                                |
+|             | Radiometric thermal image from [[7]](#references)                 | Radiometric thermal image from [[8]](#references)              |
 | ----------- | ----------------------------------------------------------------- | -------------------------------------------------------------- |
 | Radiometric | <img src="radiometric/gray_brocket.jpg" width="240" height="180"> | <img src="radiometric/porcupine.jpg" width="240" height="180"> |
 | Grayscale   | ![](output/20250606144147.jpg)                                    | ![](output/20250606153328.jpg)                                 |
 | Ironbow     | ![](output/20250606144148.jpg)                                    | ![](output/20250606153330.jpg)                                 |
 | Rainbow     | ![](output/20250606144152.jpg)                                    | ![](output/20250606153331.jpg)                                 |
 | Glowbow     | ![](output/20250606144154.jpg)                                    | ![](output/20250606153334.jpg)                                 |
-
-Radiometric thermal images from [[7]](#references) and [[8]](#references).
 
 ## References
 
