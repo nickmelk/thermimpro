@@ -1,0 +1,9 @@
+#####################################################################
+############################  v1.1  #################################
+#####################################################################
+
+- Added hotspot and coldspot functionality
+- Added adjustable vmin and vmax for color limits
+- Integrated exiftool for extracting raw image and metadata directly
+- Rearranged GUI layout for better user experience
+- Optimizide crosshair cursor and 

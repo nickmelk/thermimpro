@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
 
-from thermal_gui import ThermalGUI, open_file
+from thermal_gui import ThermalGUI
 
-def main():
-    image = open_file()
 
-    if image and image.raw is not None:
-        window = ThermalGUI(image)
-        plt.show()
+def main() -> None:
+    ThermalGUI.open_file()
+    plt.show()
+
 
 if __name__ == "__main__":
     main()

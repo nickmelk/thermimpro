@@ -126,10 +126,10 @@ Before opening another image with the Open button, ensure that the relevant meta
 
 Below, you can see the image displayed in different color palettes.
 
-![Grayscale](output/20250606160401.jpg)
-![Ironbow](output/20250606160403.jpg)
-![Rainbow](output/20250606160406.jpg)
-![Glowbow](output/20250606160408.jpg)
+|||
+| - | - |
+| ![Grayscale](output/20250606160401.jpg) | ![Ironbow](output/20250606160403.jpg) |
+| ![Rainbow](output/20250606160406.jpg) | ![Glowbow](output/20250606160408.jpg) |
 
 The functionalities of the Python Matplotlib library provide even more options for analysis, such as zooming in and out to examine specific points more closely, more color palettes and other useful features.
 

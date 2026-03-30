@@ -1,460 +1,503 @@
-import datetime
+"""
+ThermImPro - Thermal Image Processing and Visualization Tool
+Version: 1.1
+Author: Mykola Melnyk
+License: MIT
+Copyright (c) 2026 Mykola Melnyk
+
+python -m nuitka --mode=standalone --enable-plugin=tk-inter --windows-console-mode=disable main.py
+
+Description:
+    ThermImPro is a Python-based GUI for viewing, analyzing, and exporting thermal
+    images from microbolometer sensors or processed thermal data. It provides
+    visualization in multiple color palettes (Grayscale, Ironbow, Rainbow, Glowbow),
+    live temperature readout, automatic hotspot/coldspot detection, and metadata display.
+
+Usage:
+    Run the script to open the interactive GUI window:
+        python thermal_gui.py
+
+    Use the "Open file" button to load an image (.raw, .jpg, .png, .tif).
+    You can explore pixel temperatures, switch palettes, adjust thresholds,
+    and save processed images to the "output/" folder.
+
+Repository:
+    https://github.com/nickmelk/ThermImPro
+"""
+
+from typing import Self
+from datetime import datetime
+import os
 import tkinter as tk
 from tkinter import filedialog
 
+import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib.widgets as wdg
 import numpy as np
-from matplotlib.colors import Normalize
-import matplotlib.image as mpimg
+from matplotlib.colorbar import Colorbar
+from matplotlib.backend_bases import DrawEvent, ResizeEvent, MouseEvent
+from matplotlib.lines import Line2D
 
 from thermal_image import ThermalImage
 
+
+DEFAULT_WIDTH = 640
+DEFAULT_HEIGHT = 480
+DEFAULT_VMAX = 99
+DEFAULT_VMIN = 1
+CMAPS = {
+    "Grayscale": "gray",
+    "Ironbow": "inferno",
+    "Rainbow": "jet",
+    "Glowbow": "hot"
+}
+
+
 class ThermalGUI:
-    def __init__(self, image: ThermalImage):
-        plt.style.use("dark_background")
+    def __init__(self: Self) -> None:
+        """"""
 
-        self.window, ((self.raw_view, self.curve_panel), (self.thermal_view, self.misc_panel)) = plt.subplots(
-            nrows=2,
-            ncols=2,
-            figsize=(14, 7),
-            gridspec_kw={"left": 0.05,
-                         "right": 0.95,
-                         "top": 0.95,
-                         "bottom": 0.05,
-                         "wspace": 0.01
-                        }
-        )
+        self.window = None
+        self.image_panel = None
+        self.graph_panel = None
+        self.info_panel = None
+        self.open_button_container = None
+        self.save_button_container = None
+        self.palette_radio_container = None
+        self.vmax_slider_container = None
+        self.vmin_slider_container = None
+        self.hotspot_button_container = None
+        self.coldspot_button_container = None
+        self.open_button = None
+        self.save_button = None
+        self.palette_radio = None
+        self.vmax_slider = None
+        self.vmin_slider = None
+        self.hotspot_button = None
+        self.coldspot_button = None
+        self.image = None
+        self.colorbar = None
+        self.crosshair_cursor_bg = None
+        self.crosshair_cursor_fg = None
+        self.hotspot_marker = None
+        self.coldspot_button = None
+        self.metadata_text = None
+        self.max_temperature_text = None
+        self.min_temperature_text = None
+        self.avg_temperature_text = None
+        self.temperature_text = None
+        self.footer_text = None
+        self.bg = None
+        self.data = None
+        self.limits = None
 
-        self.image = image
-
-        self._build_layout()
-        self._setup_images()
+        self._create_window()
+        self._create_layout()
+        self._create_widgets()
         self._init_display()
+        self._create_texts()
+        self._bind_events()
 
-    def _build_layout(self):
-        """Prepare inset axes for UI elements."""
-
-        self.open_button_container = inset_axes(
-            parent_axes=self.raw_view,
-            width="30%",
-            height="20%",
-            loc="center left",
-            bbox_to_anchor=(-0.355, 0, 1, 1),
-            bbox_transform=self.raw_view.transAxes
-        )
-        self.palette_radio_container = inset_axes(
-            parent_axes=self.thermal_view,
-            width="30%",
-            height="50%",
-            loc="center left",
-            bbox_to_anchor=(-0.355, 0, 1, 1),
-            bbox_transform=self.thermal_view.transAxes,
-            axes_kwargs={"fc": "dimgray"}
-        )
-        self.save_button_container = inset_axes(
-            parent_axes=self.thermal_view,
-            width="21%",
-            height="20%",
-            loc="lower left",
-            bbox_to_anchor=(-0.355, -0.021, 1, 1),
-            bbox_transform=self.thermal_view.transAxes
-        )
-        self.hotspot_button_container = inset_axes(
-            parent_axes=self.thermal_view,
-            width="6%",
-            height="8%",
-            loc="lower left",
-            bbox_to_anchor=(-0.115, 0.1, 1, 1),
-            bbox_transform=self.thermal_view.transAxes
-        )
-        self.coldspot_button_container = inset_axes(
-            parent_axes=self.thermal_view,
-            width="6%",
-            height="8%",
-            loc="lower left",
-            bbox_to_anchor=(-0.115, -0.021, 1, 1),
-            bbox_transform=self.thermal_view.transAxes
-        )
-        self.colorbar_container = inset_axes(
-            parent_axes=self.thermal_view,
-            width="5%",
-            height="100%",
-            loc="right",
-            bbox_to_anchor=(0.1, 0, 1, 1),
-            bbox_transform=self.thermal_view.transAxes
-        )
-        self.vmin_slider_container = inset_axes(
-            parent_axes=self.misc_panel,
-            width="30%",
-            height="10%",
-            loc="upper left",
-            bbox_to_anchor=(0.06, -0.1, 1, 1),
-            bbox_transform=self.misc_panel.transAxes
-        )
-        self.vmax_slider_container = inset_axes(
-            parent_axes=self.misc_panel,
-            width="30%",
-            height="10%",
-            loc="upper left",
-            bbox_to_anchor=(0.06, -0.2, 1, 1),
-            bbox_transform=self.misc_panel.transAxes
-        )
-
-    def _setup_images(self):
-        """Set up images for raw and thermal views."""
-
-        self.raw_image = self.raw_view.imshow(
-            X=np.zeros((480, 640)),
-            cmap="gray"
-        )
-
-        self.thermal_image = self.thermal_view.imshow(
-            X=np.zeros((480, 640)),
-            cmap="inferno"
-        )
-
-    def _init_display(self):
+    @classmethod
+    def open_file(cls: type[Self], window: Self | None = None) -> None:
         """
-        Prepare initial visuals and text fields for the display.
+        Creates and returns a ThermalImage object from an image selected
+        in a file dialog.
+
+        If no file is chosen, returns None. If a window is provided, its
+        image is replaced and the view is updated.
         """
+
+        file_path = filedialog.askopenfilename(
+            filetypes=[
+                ("Image Files", "*.jpeg *.jpg *.png *.tif *.tiff")
+            ]
+        )
+
+        if not file_path:
+            return
+
+        try:
+            image = ThermalImage(file_path)
+        except Exception as error:
+            tk.messagebox.showerror(
+                "Image Load Error",
+                f"Could not open image file. {type(error).__name__}: {error}."
+            )
+            return
+
+        if window is None:
+            window = ThermalGUI()
+        window._update_gfx(image)
+
+    def _create_window(self: Self) -> None:
+        """Create the main application window."""
+
+        plt.style.use("dark_background")
+        self.window = plt.figure(num="ThermImPro", figsize=(14.0, 7.0))
+
+        gridspec = self.window.add_gridspec(nrows=3, ncols=3)
+
+        self.image_panel = self.window.add_subplot(gridspec[:, :2])
+        self.graph_panel = self.window.add_subplot(gridspec[0, 2])
+        self.info_panel = self.window.add_subplot(gridspec[1:, 2])
+
+        self.window.subplots_adjust(left=0.14, right=0.98, wspace=0.42)
 
         for panel in self.window.axes:
-            if panel is not self.colorbar_container:
-                panel.axis("off")
+            panel.axis("off")
 
-        self.raw_temp_text = self.raw_view.text(
-            x=1,
-            y=-0.07,
-            s="",
-            ha="right",
-            transform=self.raw_view.transAxes
-        )
-        self.raw_view.set_title("Raw Image")
+    def _create_layout(self: Self) -> None:
+        """Create containers for widgets."""
 
-        self.max_temp_text = self.thermal_view.text(
-            x=-0.33,
-            y=1,
-            s="",
-            va="top",
-            transform=self.thermal_view.transAxes,
-            family="monospace"
+        self.open_button_container = inset_axes(
+            parent_axes=self.image_panel, width="20%", height="10%",
+            loc="upper left", bbox_to_anchor=(-0.23, 0.008, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes
         )
-        self.min_temp_text = self.thermal_view.text(
-            x=-0.33,
-            y=0.94,
-            s="",
-            va="top",
-            transform=self.thermal_view.transAxes,
-            family="monospace"
+        self.save_button_container = inset_axes(
+            parent_axes=self.image_panel, width="20%", height="10%",
+            loc="upper left", bbox_to_anchor=(-0.23, -0.12, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes
         )
-        self.avg_temp_text = self.thermal_view.text(
-            x=-0.33,
-            y=0.88,
-            s="",
-            va="top",
-            transform=self.thermal_view.transAxes,
-            family="monospace"
+        self.palette_radio_container = inset_axes(
+            parent_axes=self.image_panel, width="20%", height="27%",
+            loc="upper left", bbox_to_anchor=(-0.23, -0.248, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes,
+            axes_kwargs={"fc": "dimgray"}
         )
-        self.thermal_temp_text = self.thermal_view.text(
-            x=1,
-            y=-0.07,
-            s="",
-            ha="right",
-            transform=self.thermal_view.transAxes
+        self.vmax_slider_container = inset_axes(
+            parent_axes=self.image_panel, width="14%", height="3%",
+            loc="upper left", bbox_to_anchor=(-0.23, -0.578, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes
         )
-        self.thermal_view.set_title("Ironbow")
-
-        self.colorbar = self.window.colorbar(
-            mappable=self.thermal_image,
-            cax=self.colorbar_container,
-            label="Temperature (°C)"
+        self.vmin_slider_container = inset_axes(
+            parent_axes=self.image_panel, width="14%", height="3%",
+            loc="upper left", bbox_to_anchor=(-0.23, -0.618, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes
+        )
+        self.hotspot_button_container = inset_axes(
+            parent_axes=self.image_panel, width="9%", height="6%",
+            loc="upper left", bbox_to_anchor=(-0.23, -0.668, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes
+        )
+        self.coldspot_button_container = inset_axes(
+            parent_axes=self.image_panel, width="9%", height="6%",
+            loc="upper left", bbox_to_anchor=(-0.12, -0.668, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes
         )
 
-        self.misc_panel.text(
-            x=0.156,
-            y=1,
-            s="Threshold",
-            va="top",
-            family="monospace"
-        )
-        self.metadata = self.misc_panel.text(
-            x=0.43,
-            y=1,
-            s="",
-            va="top",
-            family="monospace"
-        )
-
-        self.window.text(
-            x=0.992,
-            y=0.03,
-            s="ThermImPro v1.0\nCopyright ©2025 Mykola Melnyk (aka NickMelk)",
-            size=8,
-            ha="right"
-        )
-
-        self.window_manager = plt.get_current_fig_manager()
-        self.window_manager.set_window_title("ThermImPro")
-        self.window_manager.window.showMaximized()
-
-    def _add_widgets(self):
-        """
-
-        """
-
-        self.raw_cursor = wdg.Cursor(
-            ax=self.raw_view,
-            lw=0.7,
-            ls="-."
-        )
+    def _create_widgets(self: Self) -> None:
+        """Create widgets."""
 
         self.open_button = wdg.Button(
-            ax=self.raw_sidebar,
-            label="Open file",
-            color="dimgray",
-            hovercolor="darkgray"
+            ax=self.open_button_container, label="Open", color="dimgray",
+            hovercolor="dimgray"
         )
-
-        self.thermal_cursor = wdg.Cursor(
-            ax=self.thermal_view,
-            lw=0.7,
-            ls="-.",
-            c="black"
+        self.save_button = wdg.Button(
+            ax=self.save_button_container, label="Save", color="dimgray",
+            hovercolor="dimgray"
         )
-
         self.palette_radio = wdg.RadioButtons(
-            ax=self.thermal_sidebar_upper,
-            labels=("Grayscale", "Ironbow", "Rainbow", "Glowbow"),
-            active=1,
+            ax=self.palette_radio_container,
+            labels=("Grayscale", "Ironbow", "Rainbow", "Glowbow"), active=1,
             activecolor="green"
         )
-
-        self.save_button = wdg.Button(
-            ax=self.thermal_sidebar_lower,
-            label="Save file",
-            color="dimgray",
-            hovercolor="darkgray"
+        self.vmax_slider = wdg.Slider(
+            ax=self.vmax_slider_container, label="", valmin=0.0, valmax=100.0,
+            valinit=DEFAULT_VMAX, valfmt="%4d%%", valstep=1.0, initcolor="none",
+            handle_style={"edgecolor": "dimgray"}, fc="orchid"
         )
-
+        self.vmin_slider = wdg.Slider(
+            ax=self.vmin_slider_container, label="", valmin=0.0, valmax=100.0,
+            valinit=DEFAULT_VMIN, valfmt="%4d%%", valstep=1.0, initcolor="none",
+            handle_style={"edgecolor": "dimgray"}, fc="orchid"
+        )
         self.hotspot_button = wdg.Button(
-            ax=self.thermal_sidebar_lower_right,
-            label="H",
-            color="red",
-            hovercolor="lightcoral"
+            ax=self.hotspot_button_container, label="HOT", color="red",
+            hovercolor="red"
         )
-
         self.coldspot_button = wdg.Button(
-            ax=self.thermal_sidebar_lower_rights,
-            label="C",
-            color="blue",
-            hovercolor="cornflowerblue"
+            ax=self.coldspot_button_container, label="COLD", color="blue",
+            hovercolor="blue"
         )
+
+        self.vmax_slider.slidermin = self.vmin_slider
+        self.vmin_slider.slidermax = self.vmax_slider
+
+    def _init_display(self: Self) -> None:
+        """Initialize the image display and its elements."""
+
+        self.image = self.image_panel.imshow(
+            X=np.zeros((DEFAULT_HEIGHT, DEFAULT_WIDTH)), cmap="inferno",
+            aspect="auto"
+        )
+
+        self.crosshair_cursor_bg, = self.image_panel.plot(
+            [], [], animated=True, c="black", marker="+", mew=2.5, ms=13.5
+        )
+        self.crosshair_cursor_fg, = self.image_panel.plot(
+            [], [], animated=True, c="white", marker="+", ms=12.0
+        )
+
+        self.hotspot_marker, = self.image_panel.plot(
+            [], [], c="red", marker="+", mew=2.5, ms=13.5, visible=False
+        )
+        self.coldspot_marker, = self.image_panel.plot(
+            [], [], c="blue", marker="+", mew=2.5, ms=13.5, visible=False
+        )
+
+        colorbar_container = inset_axes(
+            parent_axes=self.image_panel, width="3%", height="100%",
+            loc="right", bbox_to_anchor=(0.05, 0.0, 1.0, 1.0),
+            bbox_transform=self.image_panel.transAxes
+        )
+        self.colorbar = Colorbar(
+            ax=colorbar_container, mappable=self.image,
+            label="Temperature, °C"
+        )
+    
+    def _create_texts(self: Self) -> None:
+        """Create text elements."""
+
+        self.image_panel.text(
+            x=-0.17, y=0.446, s="Threshold", family="monospace",
+            transform=self.image_panel.transAxes, va="top"
+        )
+        self.metadata_text = self.info_panel.text(
+            x=-0.1, y=0.9, s="", family="monospace", va="top"
+        )
+        self.max_temperature_text = self.image_panel.text(
+            x=-0.225, y=0.235, s="", family="monospace",
+            transform=self.image_panel.transAxes, va="top"
+        )
+        self.min_temperature_text = self.image_panel.text(
+            x=-0.115, y=0.235, s="", family="monospace",
+            transform=self.image_panel.transAxes, va="top"
+        )
+        self.avg_temperature_text = self.image_panel.text(
+            x=-0.170, y=0.11, s="", family="monospace",
+            transform=self.image_panel.transAxes, va="top"
+        )
+        self.temperature_text = self.image_panel.text(
+            x=1.0, y=-0.05, s="", animated=True, ha="right",
+            transform=self.image_panel.transAxes
+        )
+        self.footer_text = self.window.text(
+            x=0.992, y=0.03, s="ThermImPro v1.1\nCopyright ©2026 Mykola Melnyk",
+            size=8.0, ha="right"
+        )
+
+    def _bind_events(self: Self) -> None:
+        """Bind events to handlers."""
+
+        self.window.canvas.mpl_connect(s="draw_event", func=self._on_draw)
+        self.window.canvas.mpl_connect(s="resize_event", func=self._on_resize)
+        self.window.canvas.mpl_connect(
+            s="motion_notify_event", func=self._on_move
+        )
+        self.window.canvas.mpl_connect(s="key_release_event", func=self._on_release)
+
+        self.open_button.on_clicked(lambda _: self.open_file(self))
+        self.save_button.on_clicked(self._save_file)
+        self.palette_radio.on_clicked(self._set_palette)
+        self.vmax_slider.on_changed(
+            lambda value: self._set_clim(clim="vmax", val=value)
+        )
+        self.vmin_slider.on_changed(
+            lambda value: self._set_clim(clim="vmin", val=value)
+        )
+        self.hotspot_button.on_clicked(
+            lambda _: self._toggle_marker(self.hotspot_marker)
+        )
+        self.coldspot_button.on_clicked(
+            lambda _: self._toggle_marker(self.coldspot_marker)
+        )
+
+    def _on_draw(self: Self, _: DrawEvent) -> None:
+        """Cache the window background on draw events."""
+
+        self.bg = self.window.canvas.copy_from_bbox(self.window.bbox)
+
+    def _on_resize(self: Self, _: ResizeEvent) -> None:
+        """Scale text elements on resize events."""
+
+        width = self.window.get_figwidth() * self.window.dpi
+        scale = np.clip(a=width/1920.0, a_min=0.5, a_max=2.0)
+
+        for text in self.window.findobj(matplotlib.text.Text):
+            size = 10.0 if text is self.footer_text else 12.0
+            text.set_fontsize(scale*size)
+
+        self.window.canvas.draw_idle()
+
+    def _on_move(self: Self, event: MouseEvent) -> None:
+        """
+        Update the crosshair cursor position and temperature text on
+        mouse movement.
+        """
         
-        self.slider_min = wdg.Slider(
-            ax=self.thermal_slider_base,
-            label="Lower",
-            valmin=0,
-            valmax=10,
-            valinit=1,
-            valstep=0.1,
-            initcolor="none",
-            track_color="white"
-        )
-        self.slider_max = wdg.Slider(
-            ax=self.thermal_slider_bases,
-            label="Upper",
-            valmin=90,
-            valmax=100,
-            valinit=99,
-            valstep=0.1,
-            initcolor="none",
-            track_color="white"
-        )
+        is_in_image_panel = event.inaxes is self.image_panel
 
-    def _interactive(self):
-        self.window.canvas.mpl_connect("motion_notify_event", self.on_mouse_move)
-        self.open_button.on_clicked(lambda event: open_file(self))
-        self.palette_radio.on_clicked(self.on_palette_change)
-        self.save_button.on_clicked(self.save_file)
-        self.hotspot_button.on_clicked(self.show_hotspot)
-        self.coldspot_button.on_clicked(self.show_coldspot)
-        self.slider_min.on_changed(self.change_clim_min)
-        self.slider_max.on_changed(self.change_clim_max)
+        if is_in_image_panel:
+            xdata = np.clip(
+                a=event.xdata, a_min=0.0, a_max=self.data.width-1.0
+            )
+            ydata = np.clip(
+                a=event.ydata, a_min=0.0, a_max=self.data.height-1.0
+            )
 
-    def update_gfx(self, image: ThermalImage = None):
+            self._update_cursor_position(x=xdata, y=ydata)
+            self._update_temperature_text(x=int(xdata), y=int(ydata))
+        
+        self.window.canvas.restore_region(self.bg)
+
+        for artist in (self.crosshair_cursor_bg, self.crosshair_cursor_fg,
+                       self.temperature_text):
+            artist.set_visible(is_in_image_panel)
+
+            if is_in_image_panel:
+                self.image_panel.draw_artist(artist)
+        
+        self.window.canvas.blit(self.window.bbox)
+
+    def _update_cursor_position(self: Self, x: float, y: float) -> None:
+        """Update the crosshair cursor position."""
+
+        self.crosshair_cursor_bg.set_data([x], [y])
+        self.crosshair_cursor_fg.set_data([x], [y])
+
+    def _update_temperature_text(self: Self, x: int, y: int) -> None:
+        """
+        Update the temperature text with the value in (x, y).
         """
 
-        """
+        temp_c = self.data.temp_c[y, x]
+        temp_f = self.data.temp_f[y, x]
+        temp_k = self.data.temp_k[y, x]
 
-        # self.slider_min.reset()
-        # self.slider_max.reset()
+        self.temperature_text.set_text(
+            f"Temperature: {temp_c:.2f} °C / {temp_f:.2f} °F / {temp_k:.2f} K"
+        )
+    
+    def _save_file(self: Self, _: MouseEvent) -> None:
+        """Export the thermal image as a PNG file."""
 
-        if self.image.dtype == np.uint16:
-            self.calibration_curve()
+        os.makedirs(name="saves", exist_ok=True)
 
-        metadata_info = ""
+        filename = datetime.now().strftime("%Y%m%d%H%M%S")
+        vmin, vmax = int(self.vmin_slider.val), int(self.vmax_slider.val)
 
-        for key in self.image.metadata:
-            metadata_info += f"{key + ':':35}{self.image.metadata[key]}\n"
+        plt.imsave(
+            fname=f"saves/{filename}.png", arr=self.data.temp_c,
+            vmin=self.limits[vmin], vmax=self.limits[vmax],
+            cmap=self.image.get_cmap()
+        )
+    
+    def _set_palette(self: Self, palette: str) -> None:
+        """Set the colormap and reset the image color limits."""
 
-        if image:
-            self.image = image
+        self.image.set_cmap(CMAPS[palette])
+        self._reset_clim()
 
-        if hasattr(self, "hotspot_marker"):
-            self.hotspot_marker.remove()
+        self.window.canvas.draw_idle()
 
-        if hasattr(self, "coldspot_marker"):
-            self.coldspot_marker.remove()
+    def _reset_clim(self: Self) -> None:
+        """Reset the image color limits and sliders."""
 
-        y, x = np.unravel_index(np.argmax(self.image.tempc), self.image.tempc.shape)
-        self.hotspot_marker, = self.thermal_view.plot(x, y, marker="+", markersize=12, markeredgecolor="red", markerfacecolor="white", lw=1.5)
+        self.image.set_clim(
+            vmin=self.limits[DEFAULT_VMIN], vmax=self.limits[DEFAULT_VMAX]
+        )
+
+        self.vmax_slider.reset()
+        self.vmin_slider.reset()
+
+    def _set_clim(self: Self, clim: str, val: float) -> None:
+        """Set the image color limits."""
+
+        if clim == "vmax":
+            self.image.set_clim(vmax=self.limits[int(val)])
+        else:
+            self.image.set_clim(vmin=self.limits[int(val)])
+        
+        self.window.canvas.draw_idle()
+
+    def _toggle_marker(self: Self, marker: Line2D) -> None:
+        """Toggle the visibility of the marker."""
+
+        marker.set_visible(not marker.get_visible())
+        self.window.canvas.draw_idle()
+
+    def _swap_byte_order(self: Self) -> None:
+        self.data._swap_byte_order()
+        self._update_gfx(self.data)
+
+    def _on_release(self: Self, event) -> None:
+        if event.key == 'b':
+            self._swap_byte_order()
+    
+    def _update_gfx(self: Self, image: ThermalImage) -> None:
+        """"""
+
+        self.data = image
+        self.limits = np.percentile(a=self.data.temp_c, q=np.arange(101))
+
+        self.image.set_data(self.data.temp_c)
+        self._reset_clim()
+        self.palette_radio.set_active(1)
+
+        y, x = np.unravel_index(
+            indices=np.argmax(self.data.temp_c), shape=self.data.temp_c.shape
+        )
+        self.hotspot_marker.set_data([x], [y])
         self.hotspot_marker.set_visible(False)
 
-        y, x = np.unravel_index(np.argmin(self.image.tempc), self.image.tempc.shape)
-        self.coldspot_marker, = self.thermal_view.plot(x, y, marker="+", markersize=12, markeredgecolor="blue", markerfacecolor="none", lw=1.5)
+        y, x = np.unravel_index(
+            indices=np.argmin(self.data.temp_c), shape=self.data.temp_c.shape
+        )
+        self.coldspot_marker.set_data([x], [y])
         self.coldspot_marker.set_visible(False)
 
-        self.raw_image.set_data(self.image.raw)
-        vmax = 255 if self.image.dtype == np.float32 else 65535
-        self.raw_image.set_clim(vmin=0, vmax=vmax)
+        self.max_temperature_text.set_text(
+            f"{'MAX':^9}"
+            f"\n{np.max(self.data.temp_c):<6.2f} °C"
+            f"\n{np.max(self.data.temp_f):<6.2f} °F"
+            f"\n{np.max(self.data.temp_k):<7.2f} K"
+        )
+        self.min_temperature_text.set_text(
+            f"{'MIN':^9}"
+            f"\n{np.min(self.data.temp_c):<6.2f} °C"
+            f"\n{np.min(self.data.temp_f):<6.2f} °F"
+            f"\n{np.min(self.data.temp_k):<7.2f} K"
+        )
+        self.avg_temperature_text.set_text(
+            f"{'AVG':^9}"
+            f"\n{np.mean(self.data.temp_c):<6.2f} °C"
+            f"\n{np.mean(self.data.temp_f):<6.2f} °F"
+            f"\n{np.mean(self.data.temp_k):<7.2f} K"
+        )
 
-        self.thermal_image.set_data(self.image.tempc)
-        self.thermal_image.set_clim(np.percentile(self.image.tempc, 1), np.percentile(self.image.tempc, 99))
+        self.image.set_extent(
+            (-0.5, self.data.width-0.5, self.data.height-0.5, -0.5)
+        )
 
-        self.max_temp_text.set_text(f"Max: {np.max(self.image.tempc):.3f}°C")
-        self.min_temp_text.set_text(f"Min: {np.min(self.image.tempc):.3f}°C")
-        self.avg_temp_text.set_text(f"Avg: {np.mean(self.image.tempc):.3f}°C")
-
-        for view in (self.raw_image, self.thermal_image):
-            view.set_extent((-0.5, self.image.raw.shape[1] - 0.5, self.image.raw.shape[0] - 0.5, -0.5))
-
-        self.window.canvas.draw_idle()
-
-    def show_hotspot(self, event):
-        """
-
-        """
-
-        self.hotspot_marker.set_visible(not self.hotspot_marker.get_visible())
-        self.window.canvas.draw_idle()
-
-    def show_coldspot(self, event):
-        """
-
-        """
-
-        self.coldspot_marker.set_visible(not self.coldspot_marker.get_visible())
-        
-        self.window.canvas.draw_idle()
-
-    def change_clim_min(self, value):
-        self.thermal_image.set_clim(vmin=np.percentile(self.image.tempc, value))
-        self.window.canvas.draw_idle()
-
-    def change_clim_max(self, value):
-        self.thermal_image.set_clim(vmax=np.percentile(self.image.tempc, value))
-        self.window.canvas.draw_idle()
-
-    def on_palette_change(self, label):
-        """
-
-        """
-        
-        self.thermal_view.set_title(label)
-
-        colormaps = {"Grayscale": "gray", "Ironbow": "inferno", "Rainbow": "jet", "Glowbow": "hot"}
-
-        self.thermal_image.set_cmap(colormaps.get(label, "inferno"))
-        self.thermal_image.set_clim(np.percentile(self.image.tempc, 1), np.percentile(self.image.tempc, 99))
+        self.calibration_curve()
+        metadata_info = "\n".join(
+            f"{key + ':':35}{value}"
+            for key, value in self.data.metadata.items()
+        )
+        self.metadata_text.set_text(metadata_info)
 
         self.window.canvas.draw_idle()
 
-    def save_file(self, event = None):
-        """
+    def calibration_curve(self: Self) -> None:
+        """"""
 
-        """
-
-        cmap_name = self.thermal_image.get_cmap().name
-        cmap = plt.get_cmap(cmap_name)
-
-        temp_norm = Normalize(vmin=np.percentile(self.active_therm_c, 1), vmax=np.percentile(self.active_therm_c, 99))
-        norm_image = temp_norm(self.active_therm_c)
-
-        rgb_image = cmap(norm_image)[..., :3]
-        rgb_uint8 = (rgb_image * 255).astype(np.uint8)
-
-        filename = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-
-        mpimg.imsave(f"output/{filename}.jpg", rgb_uint8)
-
-    def on_mouse_move(self, event):
-        """
-
-        """
-
-        if event.inaxes is self.raw_view or event.inaxes is self.thermal_view:
-            x = int(event.xdata)
-            y = int(event.ydata)
-
-            temp_c = self.image.tempc[y, x]
-            temp_f = self.image.tempf[y, x]
-
-            if event.inaxes is self.raw_view:
-                self.raw_temp_text.set_text(f"Temp: {temp_c:.2f}°C, {temp_f:.2f}°F")
-                self.thermal_temp_text.set_text("")
-
-            else:
-                self.thermal_temp_text.set_text(f"Temp: {temp_c:.2f}°C, {temp_f:.2f}°F")
-                self.raw_temp_text.set_text("")
-
-        else:
-            self.raw_temp_text.set_text("")
-            self.thermal_temp_text.set_text("")
-        
-        self.window.canvas.draw_idle()
-
-    def calibration_curve(self):
-        """
-
-        """
-
-        values = np.arange(0, 65536)
-        temp_vals = self.image.raw_to_tempc(values)
-
-        self.curve_panel.clear()
-        self.curve_panel.plot(values, temp_vals, c="orange")
-        self.curve_panel.set_title("Calibration Curve: Temperature vs. Digital Signal Output (Raw Pixel Value)")
-        self.curve_panel.set_xlabel("Digital Signal Output (Raw Pixel Value)")
-        self.curve_panel.set_ylabel("Estimated Temperature (°C)")
-        self.curve_panel.grid(True)
-
-def open_file(window: ThermalGUI | None = None) -> ThermalImage | None:
-    """
-    Creates and returns a `ThermalImage` object from an image selected
-    in a file dialog.
-
-    If no file is chosen, returns None. If a `window` is provided, its
-    image is replaced and the view is updated.
-    """
-
-    root = tk.Tk()
-    root.withdraw()
-
-    file_path = filedialog.askopenfilename(
-        filetypes=[("Image Files", "*.raw *.jpg *.jpeg *.png *.tif *.tiff")]
-    )
-
-    root.destroy()
-
-    if not file_path:
-        return None
-    
-    image = ThermalImage(file_path)
-    
-    if window and image.raw is not None:
-        window.update_gfx(image)
-    
-    else:
-        return image
+        self.graph_panel.clear()
+        self.graph_panel.plot(self.data.plot_data[0], self.data.plot_data[1], c="orange")
+        self.graph_panel.set_title("Calibration Curve")
+        self.graph_panel.set_xlabel("Digital Signal Output (Raw Pixel Value)")
+        self.graph_panel.set_ylabel("Estimated Temperature (°C)")
+        self.graph_panel.grid(True)
