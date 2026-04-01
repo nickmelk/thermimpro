@@ -6,4 +6,8 @@
 - Added adjustable vmin and vmax for color limits
 - Integrated exiftool for extracting raw image and metadata directly
 - Rearranged GUI layout for better user experience
-- Optimizide crosshair cursor and 
+- Optimizide crosshair cursor and
+- Removed raw image panel
+- Added automatic byteswap for images with big-endian byte order
+
+python -m nuitka --mode=standalone --enable-plugin=tk-inter --windows-console-mode=disable main.py

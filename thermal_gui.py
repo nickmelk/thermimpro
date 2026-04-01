@@ -1,31 +1,13 @@
-"""
-ThermImPro - Thermal Image Processing and Visualization Tool
-Version: 1.1
-Author: Mykola Melnyk
-License: MIT
-Copyright (c) 2026 Mykola Melnyk
+# ThermImPro v1.1
+# Copyright (c) 2026 Mykola Melnyk
+# Licensed under the GNU General Public License v3.0 (GPLv3)
+# See LICENSE file for full license details
 
-python -m nuitka --mode=standalone --enable-plugin=tk-inter --windows-console-mode=disable main.py
-
-Description:
-    ThermImPro is a Python-based GUI for viewing, analyzing, and exporting thermal
-    images from microbolometer sensors or processed thermal data. It provides
-    visualization in multiple color palettes (Grayscale, Ironbow, Rainbow, Glowbow),
-    live temperature readout, automatic hotspot/coldspot detection, and metadata display.
-
-Usage:
-    Run the script to open the interactive GUI window:
-        python thermal_gui.py
-
-    Use the "Open file" button to load an image (.raw, .jpg, .png, .tif).
-    You can explore pixel temperatures, switch palettes, adjust thresholds,
-    and save processed images to the "output/" folder.
-
-Repository:
-    https://github.com/nickmelk/ThermImPro
 """
 
-from typing import Self
+"""
+
+from typing import Self, Any
 from datetime import datetime
 import os
 import tkinter as tk
@@ -57,41 +39,41 @@ CMAPS = {
 
 class ThermalGUI:
     def __init__(self: Self) -> None:
-        """"""
+        """."""
 
-        self.window = None
-        self.image_panel = None
-        self.graph_panel = None
-        self.info_panel = None
-        self.open_button_container = None
-        self.save_button_container = None
-        self.palette_radio_container = None
-        self.vmax_slider_container = None
-        self.vmin_slider_container = None
-        self.hotspot_button_container = None
-        self.coldspot_button_container = None
-        self.open_button = None
-        self.save_button = None
-        self.palette_radio = None
-        self.vmax_slider = None
-        self.vmin_slider = None
-        self.hotspot_button = None
-        self.coldspot_button = None
-        self.image = None
-        self.colorbar = None
-        self.crosshair_cursor_bg = None
-        self.crosshair_cursor_fg = None
-        self.hotspot_marker = None
-        self.coldspot_button = None
-        self.metadata_text = None
-        self.max_temperature_text = None
-        self.min_temperature_text = None
-        self.avg_temperature_text = None
-        self.temperature_text = None
-        self.footer_text = None
-        self.bg = None
-        self.data = None
-        self.limits = None
+        self.window: plt.Figure | None = None
+        self.image_panel: plt.Axes | None = None
+        self.graph_panel: plt.Axes | None = None
+        self.info_panel: plt.Axes | None = None
+        self.open_button_container: Any | None = None
+        self.save_button_container: Any | None = None
+        self.palette_radio_container: Any | None = None
+        self.vmax_slider_container: Any | None = None
+        self.vmin_slider_container: Any | None = None
+        self.hotspot_button_container: Any | None = None
+        self.coldspot_button_container: Any | None = None
+        self.open_button: wdg.Button | None = None
+        self.save_button: wdg.Button | None = None
+        self.palette_radio: wdg.RadioButtons | None = None
+        self.vmax_slider: wdg.Slider | None = None
+        self.vmin_slider: wdg.Slider | None = None
+        self.hotspot_button: wdg.Button | None = None
+        self.coldspot_button: wdg.Button | None = None
+        self.image: plt.AxesImage | None = None
+        self.colorbar: plt.Colorbar | None = None
+        self.crosshair_cursor_bg: Line2D | None = None
+        self.crosshair_cursor_fg: Line2D | None = None
+        self.hotspot_marker: Line2D | None = None
+        self.coldspot_button: Line2D | None = None
+        self.metadata_text: plt.Text | None = None
+        self.max_temperature_text: plt.Text | None = None
+        self.min_temperature_text: plt.Text | None = None
+        self.avg_temperature_text: plt.Text | None = None
+        self.temperature_text: plt.Text | None = None
+        self.footer_text: plt.Text | None = None
+        self.bg: Any | None = None
+        self.data: ThermalImage | None = None
+        self.limits: Any | None = None
 
         self._create_window()
         self._create_layout()
@@ -123,8 +105,7 @@ class ThermalGUI:
             image = ThermalImage(file_path)
         except Exception as error:
             tk.messagebox.showerror(
-                "Image Load Error",
-                f"Could not open image file. {type(error).__name__}: {error}."
+                title="ThermImPro", message=f"{type(error).__name__}: {error}."
             )
             return
 
@@ -193,35 +174,37 @@ class ThermalGUI:
         """Create widgets."""
 
         self.open_button = wdg.Button(
-            ax=self.open_button_container, label="Open", color="dimgray",
-            hovercolor="dimgray"
+            ax=self.open_button_container, label="Open",
+            color="dimgray", hovercolor="dimgray"
         )
         self.save_button = wdg.Button(
-            ax=self.save_button_container, label="Save", color="dimgray",
-            hovercolor="dimgray"
+            ax=self.save_button_container, label="Save",
+            color="dimgray", hovercolor="dimgray"
         )
         self.palette_radio = wdg.RadioButtons(
             ax=self.palette_radio_container,
-            labels=("Grayscale", "Ironbow", "Rainbow", "Glowbow"), active=1,
-            activecolor="green"
+            labels=("Grayscale", "Ironbow", "Rainbow", "Glowbow"),
+            active=1, activecolor="green"
         )
         self.vmax_slider = wdg.Slider(
-            ax=self.vmax_slider_container, label="", valmin=0.0, valmax=100.0,
-            valinit=DEFAULT_VMAX, valfmt="%4d%%", valstep=1.0, initcolor="none",
+            ax=self.vmax_slider_container, label="",
+            valmin=0.0, valmax=100.0, valinit=DEFAULT_VMAX,
+            valfmt="%4d%%", valstep=1.0, initcolor="none",
             handle_style={"edgecolor": "dimgray"}, fc="orchid"
         )
         self.vmin_slider = wdg.Slider(
-            ax=self.vmin_slider_container, label="", valmin=0.0, valmax=100.0,
-            valinit=DEFAULT_VMIN, valfmt="%4d%%", valstep=1.0, initcolor="none",
+            ax=self.vmin_slider_container, label="",
+            valmin=0.0, valmax=100.0, valinit=DEFAULT_VMIN,
+            valfmt="%4d%%", valstep=1.0, initcolor="none",
             handle_style={"edgecolor": "dimgray"}, fc="orchid"
         )
         self.hotspot_button = wdg.Button(
-            ax=self.hotspot_button_container, label="HOT", color="red",
-            hovercolor="red"
+            ax=self.hotspot_button_container, label="HOT",
+            color="red", hovercolor="red"
         )
         self.coldspot_button = wdg.Button(
-            ax=self.coldspot_button_container, label="COLD", color="blue",
-            hovercolor="blue"
+            ax=self.coldspot_button_container, label="COLD",
+            color="blue", hovercolor="blue"
         )
 
         self.vmax_slider.slidermin = self.vmin_slider
@@ -231,8 +214,8 @@ class ThermalGUI:
         """Initialize the image display and its elements."""
 
         self.image = self.image_panel.imshow(
-            X=np.zeros((DEFAULT_HEIGHT, DEFAULT_WIDTH)), cmap="inferno",
-            aspect="auto"
+            X=np.zeros((DEFAULT_HEIGHT, DEFAULT_WIDTH)),
+            cmap="inferno", aspect="auto"
         )
 
         self.crosshair_cursor_bg, = self.image_panel.plot(
@@ -256,7 +239,7 @@ class ThermalGUI:
         )
         self.colorbar = Colorbar(
             ax=colorbar_container, mappable=self.image,
-            label="Temperature, °C"
+            format="%d", label="Temperature, °C"
         )
     
     def _create_texts(self: Self) -> None:
@@ -286,7 +269,8 @@ class ThermalGUI:
             transform=self.image_panel.transAxes
         )
         self.footer_text = self.window.text(
-            x=0.992, y=0.03, s="ThermImPro v1.1\nCopyright ©2026 Mykola Melnyk",
+            x=0.992, y=0.03,
+            s="ThermImPro v1.1\nCopyright ©2026 Mykola Melnyk",
             size=8.0, ha="right"
         )
 
@@ -298,7 +282,6 @@ class ThermalGUI:
         self.window.canvas.mpl_connect(
             s="motion_notify_event", func=self._on_move
         )
-        self.window.canvas.mpl_connect(s="key_release_event", func=self._on_release)
 
         self.open_button.on_clicked(lambda _: self.open_file(self))
         self.save_button.on_clicked(self._save_file)
@@ -343,10 +326,10 @@ class ThermalGUI:
 
         if is_in_image_panel:
             xdata = np.clip(
-                a=event.xdata, a_min=0.0, a_max=self.data.width-1.0
+                a=event.xdata, a_min=0.0, a_max=self.data.shape[1]-1.0
             )
             ydata = np.clip(
-                a=event.ydata, a_min=0.0, a_max=self.data.height-1.0
+                a=event.ydata, a_min=0.0, a_max=self.data.shape[0]-1.0
             )
 
             self._update_cursor_position(x=xdata, y=ydata)
@@ -355,7 +338,7 @@ class ThermalGUI:
         self.window.canvas.restore_region(self.bg)
 
         for artist in (self.crosshair_cursor_bg, self.crosshair_cursor_fg,
-                       self.temperature_text):
+                self.temperature_text):
             artist.set_visible(is_in_image_panel)
 
             if is_in_image_panel:
@@ -374,9 +357,9 @@ class ThermalGUI:
         Update the temperature text with the value in (x, y).
         """
 
-        temp_c = self.data.temp_c[y, x]
-        temp_f = self.data.temp_f[y, x]
-        temp_k = self.data.temp_k[y, x]
+        temp_c = self.data.celsius[y, x]
+        temp_f = self.data.fahrenheit[y, x]
+        temp_k = self.data.kelvin[y, x]
 
         self.temperature_text.set_text(
             f"Temperature: {temp_c:.2f} °C / {temp_f:.2f} °F / {temp_k:.2f} K"
@@ -391,7 +374,7 @@ class ThermalGUI:
         vmin, vmax = int(self.vmin_slider.val), int(self.vmax_slider.val)
 
         plt.imsave(
-            fname=f"saves/{filename}.png", arr=self.data.temp_c,
+            fname=f"saves/{filename}.png", arr=self.data.celsius,
             vmin=self.limits[vmin], vmax=self.limits[vmax],
             cmap=self.image.get_cmap()
         )
@@ -428,75 +411,76 @@ class ThermalGUI:
         """Toggle the visibility of the marker."""
 
         marker.set_visible(not marker.get_visible())
+        
         self.window.canvas.draw_idle()
-
-    def _swap_byte_order(self: Self) -> None:
-        self.data._swap_byte_order()
-        self._update_gfx(self.data)
-
-    def _on_release(self: Self, event) -> None:
-        if event.key == 'b':
-            self._swap_byte_order()
     
     def _update_gfx(self: Self, image: ThermalImage) -> None:
-        """"""
+        """."""
 
         self.data = image
-        self.limits = np.percentile(a=self.data.temp_c, q=np.arange(101))
+        self.limits = np.percentile(a=self.data.celsius, q=np.arange(101))
 
-        self.image.set_data(self.data.temp_c)
+        self.image.set_data(self.data.celsius)
+
         self._reset_clim()
         self.palette_radio.set_active(1)
 
-        y, x = np.unravel_index(
-            indices=np.argmax(self.data.temp_c), shape=self.data.temp_c.shape
-        )
-        self.hotspot_marker.set_data([x], [y])
-        self.hotspot_marker.set_visible(False)
-
-        y, x = np.unravel_index(
-            indices=np.argmin(self.data.temp_c), shape=self.data.temp_c.shape
-        )
-        self.coldspot_marker.set_data([x], [y])
-        self.coldspot_marker.set_visible(False)
-
-        self.max_temperature_text.set_text(
-            f"{'MAX':^9}"
-            f"\n{np.max(self.data.temp_c):<6.2f} °C"
-            f"\n{np.max(self.data.temp_f):<6.2f} °F"
-            f"\n{np.max(self.data.temp_k):<7.2f} K"
-        )
-        self.min_temperature_text.set_text(
-            f"{'MIN':^9}"
-            f"\n{np.min(self.data.temp_c):<6.2f} °C"
-            f"\n{np.min(self.data.temp_f):<6.2f} °F"
-            f"\n{np.min(self.data.temp_k):<7.2f} K"
-        )
-        self.avg_temperature_text.set_text(
-            f"{'AVG':^9}"
-            f"\n{np.mean(self.data.temp_c):<6.2f} °C"
-            f"\n{np.mean(self.data.temp_f):<6.2f} °F"
-            f"\n{np.mean(self.data.temp_k):<7.2f} K"
-        )
+        self._update_marker_positions()
+        self._set_texts()
 
         self.image.set_extent(
-            (-0.5, self.data.width-0.5, self.data.height-0.5, -0.5)
+            (-0.5, self.data.shape[1]-0.5, self.data.shape[0]-0.5, -0.5)
         )
 
         self.calibration_curve()
-        metadata_info = "\n".join(
-            f"{key + ':':35}{value}"
-            for key, value in self.data.metadata.items()
+        self.metadata_text.set_text(
+            "\n".join(
+                f"{key + ':':35}{value}"
+                for key, value in self.data.metadata.items()
+            )
         )
-        self.metadata_text.set_text(metadata_info)
 
-        self.window.canvas.draw_idle()
+        self.window.canvas.draw_idle()   
+
+    def _update_marker_positions(self: Self) -> None:
+        """Update the positions of the hotspot and coldspot markers."""
+
+        indices = np.argmax(self.data.celsius), np.argmin(self.data.celsius)
+        y, x = np.unravel_index(indices=indices, shape=self.data.shape)
+
+        self.hotspot_marker.set_data([x[0]], [y[0]])
+        self.coldspot_marker.set_data([x[1]], [y[1]])
+
+        self.hotspot_marker.set_visible(False)
+        self.coldspot_marker.set_visible(False)
+
+    def _set_texts(self: Self) -> None:
+        """."""
+
+        self.max_temperature_text.set_text(
+            f"{'MAX':^9}"
+            f"\n{np.max(self.data.celsius):<6.2f} °C"
+            f"\n{np.max(self.data.fahrenheit):<6.2f} °F"
+            f"\n{np.max(self.data.kelvin):<7.2f} K"
+        )
+        self.min_temperature_text.set_text(
+            f"{'MIN':^9}"
+            f"\n{np.min(self.data.celsius):<6.2f} °C"
+            f"\n{np.min(self.data.fahrenheit):<6.2f} °F"
+            f"\n{np.min(self.data.kelvin):<7.2f} K"
+        )
+        self.avg_temperature_text.set_text(
+            f"{'AVG':^9}"
+            f"\n{np.mean(self.data.celsius):<6.2f} °C"
+            f"\n{np.mean(self.data.fahrenheit):<6.2f} °F"
+            f"\n{np.mean(self.data.kelvin):<7.2f} K"
+        )
 
     def calibration_curve(self: Self) -> None:
-        """"""
+        """."""
 
         self.graph_panel.clear()
-        self.graph_panel.plot(self.data.plot_data[0], self.data.plot_data[1], c="orange")
+        self.graph_panel.plot(self.data.plot_data, c="orange")
         self.graph_panel.set_title("Calibration Curve")
         self.graph_panel.set_xlabel("Digital Signal Output (Raw Pixel Value)")
         self.graph_panel.set_ylabel("Estimated Temperature (°C)")
