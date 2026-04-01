@@ -15,9 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-ThermImPro main script.
-"""
+"""ThermImPro (Thermal Image Processing) main script."""
 
 
 import matplotlib.pyplot as plt

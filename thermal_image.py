@@ -193,7 +193,9 @@ class ThermalImage:
         if raw_image.dtype != np.uint16:
             raise ValueError("Invalid raw thermal image format")
 
-        # Endianness check (in case of MM or format other than TIFF swap bytes)
+        # Endianness check (must be little-endian for converting)
+        # Swap byte order in case of MM (big-endian) or formats 
+        # other than TIFF
         if process.stdout[:2] != b"II":
             raw_image = raw_image.byteswap()
         
