@@ -19,15 +19,30 @@ Install Python and run the following commands in a terminal or command prompt to
 - NumPy
 - Matplotlib
 - OpenCV
+- ExifTool
 
 ```
-pip install numpy
+pip install -r requirements.txt
 ```
+
+### Windows
+
 ```
-pip install matplotlib
+winget install exiftool
 ```
+
+### Linux
+
+#### Ubuntu/Debian
+
 ```
-pip install opencv-python
+apt install exiftool
+```
+
+#### Arch Linux
+
+```
+pacman -S exiftool
 ```
 
 ExifTool is required to access data and to extract raw thermal images from FLIR radiometric thermal images [[1]](#references). After installing, it is convenient to make a copy of the ExifTool executable (`exiftool(-k).exe`) in its directory and rename it to `exiftool.exe`. This way, `exiftool(-k).exe` can be used for accessing data from images, while `exiftool.exe` can be used for running ExifTool commands in a terminal or command prompt, without the need to constantly rename the executable.
@@ -128,8 +143,8 @@ Below, you can see the image displayed in different color palettes.
 
 |||
 | - | - |
-| ![Grayscale](output/20250606160401.jpg) | ![Ironbow](output/20250606160403.jpg) |
-| ![Rainbow](output/20250606160406.jpg) | ![Glowbow](output/20250606160408.jpg) |
+| ![Grayscale](saves/20250606160401.jpg) | ![Ironbow](saves/20250606160403.jpg) |
+| ![Rainbow](saves/20250606160406.jpg) | ![Glowbow](saves/20250606160408.jpg) |
 
 The functionalities of the Python Matplotlib library provide even more options for analysis, such as zooming in and out to examine specific points more closely, more color palettes and other useful features.
 
@@ -140,10 +155,10 @@ The functionalities of the Python Matplotlib library provide even more options f
 |             | Radiometric thermal image from [[7]](#references)                 | Radiometric thermal image from [[8]](#references)              |
 | ----------- | :---------------------------------------------------------------: | :------------------------------------------------------------: |
 | Radiometric | <img src="radiometric/gray_brocket.jpg" width="240" height="180"> | <img src="radiometric/porcupine.jpg" width="240" height="180"> |
-| Grayscale   | ![](output/20250606144147.jpg)                                    | ![](output/20250606153328.jpg)                                 |
-| Ironbow     | ![](output/20250606144148.jpg)                                    | ![](output/20250606153330.jpg)                                 |
-| Rainbow     | ![](output/20250606144152.jpg)                                    | ![](output/20250606153331.jpg)                                 |
-| Glowbow     | ![](output/20250606144154.jpg)                                    | ![](output/20250606153334.jpg)                                 |
+| Grayscale   | ![](saves/20250606144147.jpg)                                    | ![](saves/20250606153328.jpg)                                 |
+| Ironbow     | ![](saves/20250606144148.jpg)                                    | ![](saves/20250606153330.jpg)                                 |
+| Rainbow     | ![](saves/20250606144152.jpg)                                    | ![](saves/20250606153331.jpg)                                 |
+| Glowbow     | ![](saves/20250606144154.jpg)                                    | ![](saves/20250606153334.jpg)                                 |
 
 ## References
 

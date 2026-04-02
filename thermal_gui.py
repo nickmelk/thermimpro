@@ -19,6 +19,7 @@
 
 """
 
+
 from typing import Self, Any
 from datetime import datetime
 import os
@@ -34,7 +35,7 @@ from matplotlib.colorbar import Colorbar
 from matplotlib.backend_bases import DrawEvent, ResizeEvent, MouseEvent
 from matplotlib.lines import Line2D
 
-from thermal_image import ThermalImage
+from thermal_image import ThermalImage, to_celsius, to_fahrenheit
 
 
 DEFAULT_WIDTH = 640
@@ -345,7 +346,7 @@ class ThermalGUI:
             )
 
             self._update_cursor_position(x=xdata, y=ydata)
-            self._update_temperature_text(x=int(xdata), y=int(ydata))
+            self._update_temperature_hover_text(x=int(xdata), y=int(ydata))
         
         self.window.canvas.restore_region(self.bg)
 
@@ -364,14 +365,14 @@ class ThermalGUI:
         self.crosshair_cursor_bg.set_data([x], [y])
         self.crosshair_cursor_fg.set_data([x], [y])
 
-    def _update_temperature_text(self: Self, x: int, y: int) -> None:
+    def _update_temperature_hover_text(self: Self, x: int, y: int) -> None:
         """
-        Update the temperature text with the value in (x, y).
+        Update the temperature hover text with the value in (x, y).
         """
 
-        temp_c = self.data.celsius[y, x]
-        temp_f = self.data.fahrenheit[y, x]
         temp_k = self.data.kelvin[y, x]
+        temp_c = to_celsius(temp_k)
+        temp_f = to_fahrenheit(temp_c)
 
         self.temperature_text.set_text(
             f"Temperature: {temp_c:.2f} °C / {temp_f:.2f} °F / {temp_k:.2f} K"
@@ -386,7 +387,7 @@ class ThermalGUI:
         vmin, vmax = int(self.vmin_slider.val), int(self.vmax_slider.val)
 
         plt.imsave(
-            fname=f"saves/{filename}.png", arr=self.data.celsius,
+            fname=f"saves/{filename}.png", arr=self.data.kelvin,
             vmin=self.limits[vmin], vmax=self.limits[vmax],
             cmap=self.image.get_cmap()
         )
@@ -430,15 +431,15 @@ class ThermalGUI:
         """."""
 
         self.data = image
-        self.limits = np.percentile(a=self.data.celsius, q=np.arange(101))
+        self.limits = np.percentile(a=self.data.kelvin, q=np.arange(101))
 
-        self.image.set_data(self.data.celsius)
+        self.image.set_data(self.data.kelvin)
 
         self._reset_clim()
         self.palette_radio.set_active(1)
 
         self._update_marker_positions()
-        self._set_texts()
+        self._update_temperature_stats_texts()
 
         self.image.set_extent(
             (-0.5, self.data.shape[1]-0.5, self.data.shape[0]-0.5, -0.5)
@@ -457,7 +458,7 @@ class ThermalGUI:
     def _update_marker_positions(self: Self) -> None:
         """Update the positions of the hotspot and coldspot markers."""
 
-        indices = np.argmax(self.data.celsius), np.argmin(self.data.celsius)
+        indices = np.argmax(self.data.kelvin), np.argmin(self.data.kelvin)
         y, x = np.unravel_index(indices=indices, shape=self.data.shape)
 
         self.hotspot_marker.set_data([x[0]], [y[0]])
@@ -466,26 +467,24 @@ class ThermalGUI:
         self.hotspot_marker.set_visible(False)
         self.coldspot_marker.set_visible(False)
 
-    def _set_texts(self: Self) -> None:
-        """."""
+    def _update_temperature_stats_texts(self: Self) -> None:
+        """Update the temperature stats texts (max, min, and avg)."""
+
+        max_k, min_k, avg_k = (np.max(self.data.kelvin),
+            np.min(self.data.kelvin), np.mean(self.data.kelvin))
+        max_c, min_c, avg_c = (to_celsius(max_k), to_celsius(min_k),
+            to_celsius(avg_k))
+        max_f, min_f, avg_f = (to_fahrenheit(max_c), to_fahrenheit(min_c),
+            to_fahrenheit(avg_c))
 
         self.max_temperature_text.set_text(
-            f"{'MAX':^9}"
-            f"\n{np.max(self.data.celsius):<6.2f} °C"
-            f"\n{np.max(self.data.fahrenheit):<6.2f} °F"
-            f"\n{np.max(self.data.kelvin):<7.2f} K"
+            f"{'MAX':^9}\n{max_c:<6.2f} °C\n{max_f:<6.2f} °F\n{max_k:<7.2f} K"
         )
         self.min_temperature_text.set_text(
-            f"{'MIN':^9}"
-            f"\n{np.min(self.data.celsius):<6.2f} °C"
-            f"\n{np.min(self.data.fahrenheit):<6.2f} °F"
-            f"\n{np.min(self.data.kelvin):<7.2f} K"
+            f"{'MIN':^9}\n{min_c:<6.2f} °C\n{min_f:<6.2f} °F\n{min_k:<7.2f} K"
         )
         self.avg_temperature_text.set_text(
-            f"{'AVG':^9}"
-            f"\n{np.mean(self.data.celsius):<6.2f} °C"
-            f"\n{np.mean(self.data.fahrenheit):<6.2f} °F"
-            f"\n{np.mean(self.data.kelvin):<7.2f} K"
+            f"{'AVG':^9}\n{avg_c:<6.2f} °C\n{avg_f:<6.2f} °F\n{avg_k:<7.2f} K"
         )
 
     def calibration_curve(self: Self) -> None:

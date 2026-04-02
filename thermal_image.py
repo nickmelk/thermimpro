@@ -138,8 +138,7 @@ class ThermalImage:
     Represents thermal image data obtained from a radiometric thermal
     image.
 
-    Extracts raw thermal data, and converts it to Kelvin, Celsius, and
-    Fahrenheit.
+    Extracts raw thermal data, and converts it to Kelvin.
     """
     
     def __init__(self: Self, file_path: str) -> None:
@@ -148,7 +147,7 @@ class ThermalImage:
         """
 
         self.file_path: str = file_path
-
+        
         data = self._extract_raw_data()
         self.shape: tuple[int, int] = data.shape
 
@@ -157,9 +156,6 @@ class ThermalImage:
         mdata = self._parse_metadata()
 
         self.kelvin: np.ndarray = to_kelvin(raw=data, m=mdata)
-        self.celsius: np.ndarray = to_celsius(self.kelvin)
-        self.fahrenheit: np.ndarray = to_fahrenheit(self.celsius)
-
         self.plot_data: np.ndarray = to_celsius(
             to_kelvin(raw=np.arange(RANGE_16BIT), m=mdata)
         )
@@ -243,7 +239,7 @@ class ThermalImage:
         )
 
 
-def to_kelvin(raw: np.ndarray, m: Metadata) -> np.ndarray:
+def to_kelvin(raw: np.ndarray | float, m: Metadata) -> np.ndarray | float:
     """Convert the raw thermal data to Kelvin."""
 
     obj_signal = (raw-m.ra*(1.0-m.tau)-(m.rr*m.tau*(1.0-m.e))) / (m.e*m.tau)
@@ -256,13 +252,13 @@ def to_kelvin(raw: np.ndarray, m: Metadata) -> np.ndarray:
         )
 
 
-def to_celsius(kelvin: np.ndarray) -> np.ndarray:
-    """Convert thermal data in Kelvin to Celsius."""
+def to_celsius(kelvin: np.ndarray | float) -> np.ndarray | float:
+    """Convert the thermal data in Kelvin to Celsius."""
 
     return kelvin - 273.15
 
 
-def to_fahrenheit(celsius: np.ndarray) -> np.ndarray:
-    """Convert thermal data in Celsius to Fahrenheit."""
+def to_fahrenheit(celsius: np.ndarray | float) -> np.ndarray | float:
+    """Convert the thermal data in Celsius to Fahrenheit."""
 
     return celsius*9.0/5.0 + 32.0
