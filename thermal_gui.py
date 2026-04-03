@@ -55,8 +55,8 @@ class ThermalGUI:
         """."""
 
         self.window: plt.Figure | None = None
-        self.image_panel: plt.Axes | None = None
-        self.graph_panel: plt.Axes | None = None
+        self.thermal_image_panel: plt.Axes | None = None
+        self.calibration_panel: plt.Axes | None = None
         self.info_panel: plt.Axes | None = None
         self.open_button_container: Any | None = None
         self.save_button_container: Any | None = None
@@ -73,11 +73,12 @@ class ThermalGUI:
         self.hotspot_button: wdg.Button | None = None
         self.coldspot_button: wdg.Button | None = None
         self.image: plt.AxesImage | None = None
-        self.colorbar: plt.Colorbar | None = None
         self.crosshair_cursor_bg: Line2D | None = None
         self.crosshair_cursor_fg: Line2D | None = None
         self.hotspot_marker: Line2D | None = None
         self.coldspot_button: Line2D | None = None
+        self.colorbar: plt.Colorbar | None = None
+        self.calibration_curve: Line2D | None = None
         self.metadata_text: plt.Text | None = None
         self.max_temperature_text: plt.Text | None = None
         self.min_temperature_text: plt.Text | None = None
@@ -91,7 +92,8 @@ class ThermalGUI:
         self._create_window()
         self._create_layout()
         self._create_widgets()
-        self._init_display()
+        self._init_thermal_image_panel()
+        self._init_calibration_panel()
         self._create_texts()
         self._bind_events()
 
@@ -124,6 +126,7 @@ class ThermalGUI:
 
         if window is None:
             window = ThermalGUI()
+        
         window._update_gfx(image)
 
     def _create_window(self: Self) -> None:
@@ -134,53 +137,53 @@ class ThermalGUI:
 
         gridspec = self.window.add_gridspec(nrows=3, ncols=3)
 
-        self.image_panel = self.window.add_subplot(gridspec[:, :2])
-        self.graph_panel = self.window.add_subplot(gridspec[0, 2])
+        self.thermal_image_panel = self.window.add_subplot(gridspec[:, :2])
+        self.calibration_panel = self.window.add_subplot(gridspec[0, 2])
         self.info_panel = self.window.add_subplot(gridspec[1:, 2])
 
         self.window.subplots_adjust(left=0.14, right=0.98, wspace=0.42)
 
-        for panel in self.window.axes:
-            panel.axis("off")
+        self.thermal_image_panel.set_axis_off()
+        self.info_panel.set_axis_off()
 
     def _create_layout(self: Self) -> None:
         """Create containers for widgets."""
 
         self.open_button_container = inset_axes(
-            parent_axes=self.image_panel, width="20%", height="10%",
+            parent_axes=self.thermal_image_panel, width="20%", height="10%",
             loc="upper left", bbox_to_anchor=(-0.23, 0.008, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes
+            bbox_transform=self.thermal_image_panel.transAxes
         )
         self.save_button_container = inset_axes(
-            parent_axes=self.image_panel, width="20%", height="10%",
+            parent_axes=self.thermal_image_panel, width="20%", height="10%",
             loc="upper left", bbox_to_anchor=(-0.23, -0.12, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes
+            bbox_transform=self.thermal_image_panel.transAxes
         )
         self.palette_radio_container = inset_axes(
-            parent_axes=self.image_panel, width="20%", height="27%",
+            parent_axes=self.thermal_image_panel, width="20%", height="27%",
             loc="upper left", bbox_to_anchor=(-0.23, -0.248, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes,
+            bbox_transform=self.thermal_image_panel.transAxes,
             axes_kwargs={"fc": "dimgray"}
         )
         self.vmax_slider_container = inset_axes(
-            parent_axes=self.image_panel, width="14%", height="3%",
+            parent_axes=self.thermal_image_panel, width="14%", height="3%",
             loc="upper left", bbox_to_anchor=(-0.23, -0.578, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes
+            bbox_transform=self.thermal_image_panel.transAxes
         )
         self.vmin_slider_container = inset_axes(
-            parent_axes=self.image_panel, width="14%", height="3%",
+            parent_axes=self.thermal_image_panel, width="14%", height="3%",
             loc="upper left", bbox_to_anchor=(-0.23, -0.618, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes
+            bbox_transform=self.thermal_image_panel.transAxes
         )
         self.hotspot_button_container = inset_axes(
-            parent_axes=self.image_panel, width="9%", height="6%",
+            parent_axes=self.thermal_image_panel, width="9%", height="6%",
             loc="upper left", bbox_to_anchor=(-0.23, -0.668, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes
+            bbox_transform=self.thermal_image_panel.transAxes
         )
         self.coldspot_button_container = inset_axes(
-            parent_axes=self.image_panel, width="9%", height="6%",
+            parent_axes=self.thermal_image_panel, width="9%", height="6%",
             loc="upper left", bbox_to_anchor=(-0.12, -0.668, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes
+            bbox_transform=self.thermal_image_panel.transAxes
         )
 
     def _create_widgets(self: Self) -> None:
@@ -223,63 +226,76 @@ class ThermalGUI:
         self.vmax_slider.slidermin = self.vmin_slider
         self.vmin_slider.slidermax = self.vmax_slider
 
-    def _init_display(self: Self) -> None:
-        """Initialize the image display and its elements."""
+    def _init_thermal_image_panel(self: Self) -> None:
+        """Initialize the thermal image panel and its elements."""
 
-        self.image = self.image_panel.imshow(
+        self.image = self.thermal_image_panel.imshow(
             X=np.zeros((DEFAULT_HEIGHT, DEFAULT_WIDTH)),
             cmap="inferno", aspect="auto"
         )
 
-        self.crosshair_cursor_bg, = self.image_panel.plot(
+        self.crosshair_cursor_bg, = self.thermal_image_panel.plot(
             [], [], animated=True, c="black", marker="+", mew=2.5, ms=13.5
         )
-        self.crosshair_cursor_fg, = self.image_panel.plot(
+        self.crosshair_cursor_fg, = self.thermal_image_panel.plot(
             [], [], animated=True, c="white", marker="+", ms=12.0
         )
 
-        self.hotspot_marker, = self.image_panel.plot(
-            [], [], c="red", marker="+", mew=2.5, ms=13.5, visible=False
+        self.hotspot_marker, = self.thermal_image_panel.plot(
+            [], [], c="red", marker="+", mew=2.5, ms=13.5
         )
-        self.coldspot_marker, = self.image_panel.plot(
-            [], [], c="blue", marker="+", mew=2.5, ms=13.5, visible=False
+        self.coldspot_marker, = self.thermal_image_panel.plot(
+            [], [], c="blue", marker="+", mew=2.5, ms=13.5
         )
 
         colorbar_container = inset_axes(
-            parent_axes=self.image_panel, width="3%", height="100%",
+            parent_axes=self.thermal_image_panel, width="3%", height="100%",
             loc="right", bbox_to_anchor=(0.05, 0.0, 1.0, 1.0),
-            bbox_transform=self.image_panel.transAxes
+            bbox_transform=self.thermal_image_panel.transAxes
         )
         self.colorbar = Colorbar(
             ax=colorbar_container, mappable=self.image,
             format="%d", label="Temperature, °C"
         )
     
+    def _init_calibration_panel(self: Self) -> None:
+        """Initialize the calibration panel and its elements."""
+
+        self.calibration_curve, = self.calibration_panel.plot(
+            [], [], c="orange"
+        )
+
+        self.calibration_panel.set_title("Calibration Curve")
+        self.calibration_panel.set_xlabel("Digital Signal Output")
+        self.calibration_panel.set_ylabel("Estimated Temperature (°C)")
+
+        self.calibration_panel.grid(visible=True, alpha=0.5)
+    
     def _create_texts(self: Self) -> None:
         """Create text elements."""
 
-        self.image_panel.text(
+        self.thermal_image_panel.text(
             x=-0.17, y=0.446, s="Threshold", family="monospace",
-            transform=self.image_panel.transAxes, va="top"
+            transform=self.thermal_image_panel.transAxes, va="top"
         )
         self.metadata_text = self.info_panel.text(
             x=-0.1, y=0.9, s="", family="monospace", va="top"
         )
-        self.max_temperature_text = self.image_panel.text(
+        self.max_temperature_text = self.thermal_image_panel.text(
             x=-0.225, y=0.235, s="", family="monospace",
-            transform=self.image_panel.transAxes, va="top"
+            transform=self.thermal_image_panel.transAxes, va="top"
         )
-        self.min_temperature_text = self.image_panel.text(
+        self.min_temperature_text = self.thermal_image_panel.text(
             x=-0.115, y=0.235, s="", family="monospace",
-            transform=self.image_panel.transAxes, va="top"
+            transform=self.thermal_image_panel.transAxes, va="top"
         )
-        self.avg_temperature_text = self.image_panel.text(
+        self.avg_temperature_text = self.thermal_image_panel.text(
             x=-0.170, y=0.11, s="", family="monospace",
-            transform=self.image_panel.transAxes, va="top"
+            transform=self.thermal_image_panel.transAxes, va="top"
         )
-        self.temperature_text = self.image_panel.text(
+        self.temperature_text = self.thermal_image_panel.text(
             x=1.0, y=-0.05, s="", animated=True, ha="right",
-            transform=self.image_panel.transAxes
+            transform=self.thermal_image_panel.transAxes
         )
         self.footer_text = self.window.text(
             x=0.992, y=0.03,
@@ -335,7 +351,7 @@ class ThermalGUI:
         mouse movement.
         """
         
-        is_in_image_panel = event.inaxes is self.image_panel
+        is_in_image_panel = event.inaxes is self.thermal_image_panel
 
         if is_in_image_panel:
             xdata = np.clip(
@@ -355,7 +371,7 @@ class ThermalGUI:
             artist.set_visible(is_in_image_panel)
 
             if is_in_image_panel:
-                self.image_panel.draw_artist(artist)
+                self.thermal_image_panel.draw_artist(artist)
         
         self.window.canvas.blit(self.window.bbox)
 
@@ -370,9 +386,9 @@ class ThermalGUI:
         Update the temperature hover text with the value in (x, y).
         """
 
+        temp_c = self.data.celsius[y, x]
+        temp_f = self.data.fahrenheit[y, x]
         temp_k = self.data.kelvin[y, x]
-        temp_c = to_celsius(temp_k)
-        temp_f = to_fahrenheit(temp_c)
 
         self.temperature_text.set_text(
             f"Temperature: {temp_c:.2f} °C / {temp_f:.2f} °F / {temp_k:.2f} K"
@@ -387,7 +403,7 @@ class ThermalGUI:
         vmin, vmax = int(self.vmin_slider.val), int(self.vmax_slider.val)
 
         plt.imsave(
-            fname=f"saves/{filename}.png", arr=self.data.kelvin,
+            fname=f"saves/{filename}.png", arr=self.data.celsius,
             vmin=self.limits[vmin], vmax=self.limits[vmax],
             cmap=self.image.get_cmap()
         )
@@ -431,9 +447,9 @@ class ThermalGUI:
         """."""
 
         self.data = image
-        self.limits = np.percentile(a=self.data.kelvin, q=np.arange(101))
+        self.limits = np.percentile(a=self.data.celsius, q=np.arange(101))
 
-        self.image.set_data(self.data.kelvin)
+        self.image.set_data(self.data.celsius)
 
         self._reset_clim()
         self.palette_radio.set_active(1)
@@ -445,7 +461,7 @@ class ThermalGUI:
             (-0.5, self.data.shape[1]-0.5, self.data.shape[0]-0.5, -0.5)
         )
 
-        self.calibration_curve()
+        self._update_calibration_curve()
         self.metadata_text.set_text(
             "\n".join(
                 f"{key + ':':35}{value}"
@@ -453,12 +469,12 @@ class ThermalGUI:
             )
         )
 
-        self.window.canvas.draw_idle()   
+        self.window.canvas.draw_idle()
 
     def _update_marker_positions(self: Self) -> None:
         """Update the positions of the hotspot and coldspot markers."""
 
-        indices = np.argmax(self.data.kelvin), np.argmin(self.data.kelvin)
+        indices = np.argmax(self.data.celsius), np.argmin(self.data.celsius)
         y, x = np.unravel_index(indices=indices, shape=self.data.shape)
 
         self.hotspot_marker.set_data([x[0]], [y[0]])
@@ -470,12 +486,12 @@ class ThermalGUI:
     def _update_temperature_stats_texts(self: Self) -> None:
         """Update the temperature stats texts (max, min, and avg)."""
 
+        max_c, min_c, avg_c = (np.max(self.data.celsius),
+            np.min(self.data.celsius), np.mean(self.data.celsius))
+        max_f, min_f, avg_f = (np.max(self.data.fahrenheit),
+            np.min(self.data.fahrenheit), np.mean(self.data.fahrenheit))
         max_k, min_k, avg_k = (np.max(self.data.kelvin),
             np.min(self.data.kelvin), np.mean(self.data.kelvin))
-        max_c, min_c, avg_c = (to_celsius(max_k), to_celsius(min_k),
-            to_celsius(avg_k))
-        max_f, min_f, avg_f = (to_fahrenheit(max_c), to_fahrenheit(min_c),
-            to_fahrenheit(avg_c))
 
         self.max_temperature_text.set_text(
             f"{'MAX':^9}\n{max_c:<6.2f} °C\n{max_f:<6.2f} °F\n{max_k:<7.2f} K"
@@ -486,13 +502,13 @@ class ThermalGUI:
         self.avg_temperature_text.set_text(
             f"{'AVG':^9}\n{avg_c:<6.2f} °C\n{avg_f:<6.2f} °F\n{avg_k:<7.2f} K"
         )
+    
+    def _update_calibration_curve(self: Self) -> None:
+        """Update the calibration curve with new data."""
 
-    def calibration_curve(self: Self) -> None:
-        """."""
+        self.calibration_curve.set_data(
+            range(len(self.data.calibration_data)), self.data.calibration_data
+        )
 
-        self.graph_panel.clear()
-        self.graph_panel.plot(self.data.plot_data, c="orange")
-        self.graph_panel.set_title("Calibration Curve")
-        self.graph_panel.set_xlabel("Digital Signal Output (Raw Pixel Value)")
-        self.graph_panel.set_ylabel("Estimated Temperature (°C)")
-        self.graph_panel.grid(True)
+        self.calibration_panel.relim()
+        self.calibration_panel.autoscale_view()

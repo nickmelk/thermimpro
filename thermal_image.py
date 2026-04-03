@@ -138,7 +138,8 @@ class ThermalImage:
     Represents thermal image data obtained from a radiometric thermal
     image.
 
-    Extracts raw thermal data, and converts it to Kelvin.
+    Extracts raw thermal data, and converts it to Kelvin, Celsius, and
+    Fahrenheit.
     """
     
     def __init__(self: Self, file_path: str) -> None:
@@ -146,17 +147,20 @@ class ThermalImage:
         Initialize a ThermalImage instance from the radiometric input.
         """
 
-        self.file_path: str = file_path
-        
-        data = self._extract_raw_data()
-        self.shape: tuple[int, int] = data.shape
+        self.file_path = file_path
 
-        self.metadata: dict[str, float] = {}
+        data = self._extract_raw_data()
+        self.shape = data.shape
+
+        self.metadata = {}
         self._extract_metadata()
         mdata = self._parse_metadata()
+        
+        self.kelvin = to_kelvin(raw=data, m=mdata)
+        self.celsius = to_celsius(self.kelvin)
+        self.fahrenheit = to_fahrenheit(self.celsius)
 
-        self.kelvin: np.ndarray = to_kelvin(raw=data, m=mdata)
-        self.plot_data: np.ndarray = to_celsius(
+        self.calibration_data = to_celsius(
             to_kelvin(raw=np.arange(RANGE_16BIT), m=mdata)
         )
 
