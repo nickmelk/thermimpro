@@ -8,7 +8,7 @@
 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
@@ -16,78 +16,49 @@
 
 
 """
-
+Graphical user interface for loading, viewing, and analyzing thermal
+images.
 """
 
 
-from typing import Self, Any
-from datetime import datetime
-import os
-import tkinter as tk
+from typing import Self, Optional
 from tkinter import filedialog
+import tkinter as tk
+import os
+from datetime import datetime
 
-import matplotlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-import matplotlib.widgets as wdg
+from matplotlib.widgets import Button, RadioButtons, Slider
 import numpy as np
 from matplotlib.colorbar import Colorbar
 from matplotlib.backend_bases import DrawEvent, ResizeEvent, MouseEvent
+from matplotlib.text import Text
 from matplotlib.lines import Line2D
 
-from thermal_image import ThermalImage, to_celsius, to_fahrenheit
+from thermal_image import ThermalImage
 
 
-DEFAULT_WIDTH = 640
-DEFAULT_HEIGHT = 480
 DEFAULT_VMAX = 99
 DEFAULT_VMIN = 1
+DEFAULT_HEIGHT = 480
+DEFAULT_WIDTH = 640
 CMAPS = {
     "Grayscale": "gray",
     "Ironbow": "inferno",
     "Rainbow": "jet",
     "Glowbow": "hot"
 }
+PERCENTILE_RANGE = 101
 
 
 class ThermalGUI:
-    def __init__(self: Self) -> None:
-        """."""
+    """
+    Graphical user interface for thermal image display and analysis.
+    """
 
-        self.window: plt.Figure | None = None
-        self.thermal_image_panel: plt.Axes | None = None
-        self.calibration_panel: plt.Axes | None = None
-        self.info_panel: plt.Axes | None = None
-        self.open_button_container: Any | None = None
-        self.save_button_container: Any | None = None
-        self.palette_radio_container: Any | None = None
-        self.vmax_slider_container: Any | None = None
-        self.vmin_slider_container: Any | None = None
-        self.hotspot_button_container: Any | None = None
-        self.coldspot_button_container: Any | None = None
-        self.open_button: wdg.Button | None = None
-        self.save_button: wdg.Button | None = None
-        self.palette_radio: wdg.RadioButtons | None = None
-        self.vmax_slider: wdg.Slider | None = None
-        self.vmin_slider: wdg.Slider | None = None
-        self.hotspot_button: wdg.Button | None = None
-        self.coldspot_button: wdg.Button | None = None
-        self.image: plt.AxesImage | None = None
-        self.crosshair_cursor_bg: Line2D | None = None
-        self.crosshair_cursor_fg: Line2D | None = None
-        self.hotspot_marker: Line2D | None = None
-        self.coldspot_button: Line2D | None = None
-        self.colorbar: plt.Colorbar | None = None
-        self.calibration_curve: Line2D | None = None
-        self.metadata_text: plt.Text | None = None
-        self.max_temperature_text: plt.Text | None = None
-        self.min_temperature_text: plt.Text | None = None
-        self.avg_temperature_text: plt.Text | None = None
-        self.temperature_text: plt.Text | None = None
-        self.footer_text: plt.Text | None = None
-        self.bg: Any | None = None
-        self.data: ThermalImage | None = None
-        self.limits: Any | None = None
+    def __init__(self: Self) -> None:
+        """Initialize a ThermalGUI instance."""
 
         self._create_window()
         self._create_layout()
@@ -97,27 +68,19 @@ class ThermalGUI:
         self._create_texts()
         self._bind_events()
 
-    @classmethod
-    def open_file(cls: type[Self], window: Self | None = None) -> None:
-        """
-        Creates and returns a ThermalImage object from an image selected
-        in a file dialog.
-
-        If no file is chosen, returns None. If a window is provided, its
-        image is replaced and the view is updated.
-        """
+    @staticmethod
+    def open_file(window: Optional["ThermalGUI"] = None) -> None:
+        """Open an image file and update the display."""
 
         file_path = filedialog.askopenfilename(
-            filetypes=[
-                ("Image Files", "*.jpeg *.jpg *.png *.tif *.tiff")
-            ]
+            filetypes=[("Image Files", "*.jpeg *.jpg *.png *.tif *.tiff")]
         )
 
         if not file_path:
             return
 
         try:
-            image = ThermalImage(file_path)
+            data = ThermalImage(file_path)
         except Exception as error:
             tk.messagebox.showerror(
                 title="ThermImPro", message=f"{type(error).__name__}: {error}."
@@ -127,7 +90,8 @@ class ThermalGUI:
         if window is None:
             window = ThermalGUI()
         
-        window._update_gfx(image)
+        window._set_data(data)
+        window._update_display()
 
     def _create_window(self: Self) -> None:
         """Create the main application window."""
@@ -189,36 +153,36 @@ class ThermalGUI:
     def _create_widgets(self: Self) -> None:
         """Create widgets."""
 
-        self.open_button = wdg.Button(
+        self.open_button = Button(
             ax=self.open_button_container, label="Open",
             color="dimgray", hovercolor="dimgray"
         )
-        self.save_button = wdg.Button(
+        self.save_button = Button(
             ax=self.save_button_container, label="Save",
             color="dimgray", hovercolor="dimgray"
         )
-        self.palette_radio = wdg.RadioButtons(
+        self.palette_radio = RadioButtons(
             ax=self.palette_radio_container,
             labels=("Grayscale", "Ironbow", "Rainbow", "Glowbow"),
             active=1, activecolor="green"
         )
-        self.vmax_slider = wdg.Slider(
+        self.vmax_slider = Slider(
             ax=self.vmax_slider_container, label="",
             valmin=0.0, valmax=100.0, valinit=DEFAULT_VMAX,
             valfmt="%4d%%", valstep=1.0, initcolor="none",
             handle_style={"edgecolor": "dimgray"}, fc="orchid"
         )
-        self.vmin_slider = wdg.Slider(
+        self.vmin_slider = Slider(
             ax=self.vmin_slider_container, label="",
             valmin=0.0, valmax=100.0, valinit=DEFAULT_VMIN,
             valfmt="%4d%%", valstep=1.0, initcolor="none",
             handle_style={"edgecolor": "dimgray"}, fc="orchid"
         )
-        self.hotspot_button = wdg.Button(
+        self.hotspot_button = Button(
             ax=self.hotspot_button_container, label="HOT",
             color="red", hovercolor="red"
         )
-        self.coldspot_button = wdg.Button(
+        self.coldspot_button = Button(
             ax=self.coldspot_button_container, label="COLD",
             color="blue", hovercolor="blue"
         )
@@ -279,7 +243,7 @@ class ThermalGUI:
             transform=self.thermal_image_panel.transAxes, va="top"
         )
         self.metadata_text = self.info_panel.text(
-            x=-0.1, y=0.9, s="", family="monospace", va="top"
+            x=-0.05, y=0.9, s="", family="monospace", va="top"
         )
         self.max_temperature_text = self.thermal_image_panel.text(
             x=-0.225, y=0.235, s="", family="monospace",
@@ -339,7 +303,7 @@ class ThermalGUI:
         width = self.window.get_figwidth() * self.window.dpi
         scale = np.clip(a=width/1920.0, a_min=0.5, a_max=2.0)
 
-        for text in self.window.findobj(matplotlib.text.Text):
+        for text in self.window.findobj(Text):
             size = 10.0 if text is self.footer_text else 12.0
             text.set_fontsize(scale*size)
 
@@ -443,45 +407,33 @@ class ThermalGUI:
         
         self.window.canvas.draw_idle()
     
-    def _update_gfx(self: Self, image: ThermalImage) -> None:
-        """."""
+    def _set_data(self: Self, data: ThermalImage) -> None:
+        """
+        Set the image data and compute the image color limits.
+        """
 
-        self.data = image
-        self.limits = np.percentile(a=self.data.celsius, q=np.arange(101))
+        self.data = data
+        self.limits = np.percentile(
+            a=self.data.celsius, q=np.arange(PERCENTILE_RANGE)
+        )
+    
+    def _update_display(self: Self) -> None:
+        """Update the display."""
 
         self.image.set_data(self.data.celsius)
-
-        self._reset_clim()
-        self.palette_radio.set_active(1)
-
-        self._update_marker_positions()
-        self._update_temperature_stats_texts()
-
         self.image.set_extent(
             (-0.5, self.data.shape[1]-0.5, self.data.shape[0]-0.5, -0.5)
         )
 
+        self.palette_radio.set_active(1)
+        self._reset_clim()
+        self._update_temperature_stats_texts()
+        self._update_marker_positions()
+
         self._update_calibration_curve()
-        self.metadata_text.set_text(
-            "\n".join(
-                f"{key + ':':35}{value}"
-                for key, value in self.data.metadata.items()
-            )
-        )
+        self._update_metadata_text()
 
         self.window.canvas.draw_idle()
-
-    def _update_marker_positions(self: Self) -> None:
-        """Update the positions of the hotspot and coldspot markers."""
-
-        indices = np.argmax(self.data.celsius), np.argmin(self.data.celsius)
-        y, x = np.unravel_index(indices=indices, shape=self.data.shape)
-
-        self.hotspot_marker.set_data([x[0]], [y[0]])
-        self.coldspot_marker.set_data([x[1]], [y[1]])
-
-        self.hotspot_marker.set_visible(False)
-        self.coldspot_marker.set_visible(False)
 
     def _update_temperature_stats_texts(self: Self) -> None:
         """Update the temperature stats texts (max, min, and avg)."""
@@ -502,13 +454,36 @@ class ThermalGUI:
         self.avg_temperature_text.set_text(
             f"{'AVG':^9}\n{avg_c:<6.2f} °C\n{avg_f:<6.2f} °F\n{avg_k:<7.2f} K"
         )
+
+    def _update_marker_positions(self: Self) -> None:
+        """Update the positions of the hotspot and coldspot markers."""
+
+        indices = np.argmax(self.data.celsius), np.argmin(self.data.celsius)
+        y, x = np.unravel_index(indices=indices, shape=self.data.shape)
+
+        self.hotspot_marker.set_data([x[0]], [y[0]])
+        self.coldspot_marker.set_data([x[1]], [y[1]])
+
+        self.hotspot_marker.set_visible(False)
+        self.coldspot_marker.set_visible(False)
     
     def _update_calibration_curve(self: Self) -> None:
         """Update the calibration curve with new data."""
 
-        self.calibration_curve.set_data(
-            range(len(self.data.calibration_data)), self.data.calibration_data
-        )
+        x = np.arange(len(self.data.calibration_data))
+        y = self.data.calibration_data
+
+        self.calibration_curve.set_data(x, y)
 
         self.calibration_panel.relim()
         self.calibration_panel.autoscale_view()
+
+    def _update_metadata_text(self: Self) -> None:
+        """Update the metadata text."""
+
+        self.metadata_text.set_text(
+            "\n".join(
+                f"{key:31}: {value:>11}"
+                for key, value in self.data.metadata.items()
+            )
+        )

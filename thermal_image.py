@@ -8,7 +8,7 @@
 
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 
 # You should have received a copy of the GNU General Public License
@@ -243,7 +243,7 @@ class ThermalImage:
         )
 
 
-def to_kelvin(raw: np.ndarray | float, m: Metadata) -> np.ndarray | float:
+def to_kelvin(raw: np.ndarray, m: Metadata) -> np.ndarray:
     """Convert the raw thermal data to Kelvin."""
 
     obj_signal = (raw-m.ra*(1.0-m.tau)-(m.rr*m.tau*(1.0-m.e))) / (m.e*m.tau)
@@ -256,13 +256,13 @@ def to_kelvin(raw: np.ndarray | float, m: Metadata) -> np.ndarray | float:
         )
 
 
-def to_celsius(kelvin: np.ndarray | float) -> np.ndarray | float:
+def to_celsius(kelvin: np.ndarray) -> np.ndarray:
     """Convert the thermal data in Kelvin to Celsius."""
 
     return kelvin - 273.15
 
 
-def to_fahrenheit(celsius: np.ndarray | float) -> np.ndarray | float:
+def to_fahrenheit(celsius: np.ndarray) -> np.ndarray:
     """Convert the thermal data in Celsius to Fahrenheit."""
 
     return celsius*9.0/5.0 + 32.0
